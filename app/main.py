@@ -4,6 +4,7 @@ from typing import Dict, List
 
 from app.schemas import ChatRequest, ChatResponse, MessageTurn
 from app.llm import ask_llm
+from app.utils.trimming import trim_for_response
 
 # Inicializamos la aplicación FastAPI
 # El título y la versión aparecerán en la documentación automática (Swagger)
@@ -25,7 +26,7 @@ def root():
     Endpoint raíz para verificar que la API está corriendo.
     Devuelve un saludo simple.
     """
-    return {"ok": True, "msg": "Hola Beto, FastAPI está corriendo 👋"}
+    return {"ok": True, "msg": "Hello world :) | FastAPI está corriendo 👋"}
 
 @app.get("/health")
 def health():
@@ -47,7 +48,7 @@ def chat(request: ChatRequest) -> ChatResponse:
     3. Agrega el mensaje del usuario al historial.
     4. Genera la respuesta del modelo LLM (usando `ask_llm`).
     5. Guarda el historial actualizado en memoria.
-    6. Devuelve el historial completo en un objeto `ChatResponse`.
+    6. Devuelve solo los últimos 5 mensajes de cada rol (trimming de respuesta).
 
     Args:
         request (ChatRequest): JSON con:
@@ -55,14 +56,14 @@ def chat(request: ChatRequest) -> ChatResponse:
             - `message` (obligatorio): Mensaje enviado por el usuario.
 
     Returns:
-        ChatResponse: Objeto con el `conversation_id` y la lista de turnos (user/bot).
+        ChatResponse: Objeto con el `conversation_id` y la lista de turnos (user/assistant),
+                      recortada a los últimos 5 por rol.
     """
     # 1) Obtener o crear conversation_id
     conv_id: str = request.conversation_id or str(uuid4())
 
     # 2) Recuperar historial existente o iniciar vacío
     history: list[MessageTurn] = conversations.get(conv_id, [])
-
 
     # 3) Agregar mensaje del usuario
     history.append(MessageTurn(role="user", message=request.message))
@@ -74,5 +75,8 @@ def chat(request: ChatRequest) -> ChatResponse:
     # 5) Guardar historial actualizado en memoria
     conversations[conv_id] = history
 
-    # 6) Retornar respuesta estructurada
-    return ChatResponse(conversation_id=conv_id, message=history)
+    # 6) Recortar historial solo para la respuesta (5 user + 5 assistant)
+    trimmed_history = trim_for_response(history)
+
+    # 6) Retornar respuesta recortada y estructurada
+    return ChatResponse(conversation_id=conv_id, message=trimmed_history)
