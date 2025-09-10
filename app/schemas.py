@@ -25,7 +25,7 @@ class MessageTurn(BaseModel):
             - "bot" → mensaje generado por el chatbot.
         message (str): Contenido textual del mensaje.
     """
-    role: Literal["user", "bot"]
+    role: Literal["user", "assistant"]
     message: str
 
 
