@@ -14,6 +14,11 @@ app = FastAPI(title="Kopi Debate API", version="0.2.0")
 # ⚠️ Nota: esto se reinicia si el servidor se cae. Luego migraremos a Redis.
 conversations: Dict[str, List[MessageTurn]] = {}
 
+# Almacenamiento temporal en memoria RAM
+# conversations = { conversation_id (str): [lista de turnos MessageTurn] }
+# ⚠️ Nota: esto se reinicia si el servidor se cae. Luego migraremos a Redis.
+conversations: Dict[str, List[MessageTurn]] = {}
+
 @app.get("/")
 def root():
     """
@@ -57,6 +62,7 @@ def chat(request: ChatRequest) -> ChatResponse:
 
     # 2) Recuperar historial existente o iniciar vacío
     history: list[MessageTurn] = conversations.get(conv_id, [])
+
 
     # 3) Agregar mensaje del usuario
     history.append(MessageTurn(role="user", message=request.message))
