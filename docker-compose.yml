@@ -1,7 +1,7 @@
 # docker-compose.yml
 # -------------------------------------------------
-# Orquesta la base de datos PostgreSQL en un contenedor
-# para el proyecto Kopi Debate API.
+# Orquesta la base de datos PostgreSQL y la API FastAPI
+# en contenedores separados pero conectados entre sí.
 # -------------------------------------------------
 
 version: "3.9"
@@ -22,7 +22,7 @@ services:
     #   POSTGRES_USER=usuario
     #   POSTGRES_PASSWORD=contraseña
     #   POSTGRES_DB=nombre_base
-    #   POSTGRES_PORT=5432 (o el que se defin por el usuario en su .env)
+    #   POSTGRES_PORT=5432 (o el que definas en tu .env)
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -47,6 +47,30 @@ services:
       interval: 5s   # cada cuánto probar
       timeout: 3s    # tiempo máximo de espera
       retries: 10    # intentos antes de marcarlo como "unhealthy"
+
+  api:
+    # Construye la imagen de la API a partir del Dockerfile en la raíz
+    build: .
+    
+    # Nombre del contenedor para identificarlo fácilmente
+    container_name: kopi_api
+
+    # Reinicio automático salvo que lo detengas manualmente
+    restart: unless-stopped
+
+    # La API depende de que la base de datos esté lista
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Variables de entorno que necesita la API
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+    # Expone FastAPI en localhost:8000
+    ports:
+      - "8000:8000"
 
 # Declaración de volúmenes
 volumes:
