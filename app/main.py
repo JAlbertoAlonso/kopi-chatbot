@@ -12,12 +12,10 @@ app = FastAPI(title="Kopi Debate API", version="0.2.0")
 
 # Almacenamiento temporal en memoria RAM
 # conversations = { conversation_id (str): [lista de turnos MessageTurn] }
-# ⚠️ Nota: esto se reinicia si el servidor se cae. Luego migraremos a Redis.
 conversations: Dict[str, List[MessageTurn]] = {}
 
 # Almacenamiento temporal en memoria RAM
 # conversations = { conversation_id (str): [lista de turnos MessageTurn] }
-# ⚠️ Nota: esto se reinicia si el servidor se cae. Luego migraremos a Redis.
 conversations: Dict[str, List[MessageTurn]] = {}
 
 @app.get("/")
