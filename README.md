@@ -48,7 +48,7 @@ uvicorn app.main:app --reload
 
 - Home → http://127.0.0.1:8000/  
   ```json
-    {"ok": true, "msg": "Hola Beto, FastAPI está corriendo 👋"}
+    {"ok": true, "msg": "Hello world :) | FastAPI Aestá corriendo 👋"}
   ```
 
 - Health → http://127.0.0.1:8000/health  
@@ -58,10 +58,71 @@ uvicorn app.main:app --reload
 
 - Docs (Swagger) → http://127.0.0.1:8000/docs
 
+- Chatbot → http://127.0.0.1:8000/chat
+
+Request:
+```json
+    {
+  "conversation_id": null,
+  "message": "Hola, ¿qué tal?"
+}
+```
+
+Response:
+```json
+    {
+  "conversation_id": "uuid",
+  "message": [
+    {"role": "user", "message": "Hola, ¿qué tal?"},
+    {"role": "assistant", "message": "¡Hola! Estoy aquí para ayudarte, ¿en qué puedo asistirte hoy?"}
+  ]
+}
+```
+
 ---
 
 ## 📦 Dependencias iniciales
 
-- fastapi==0.111.1  
-- uvicorn[standard]==0.30.3  
-- pytest==8.3.3
+- fastapi==0.111.1 – framework principal  
+- uvicorn[standard]==0.30.3 – servidor ASGI 
+- python-dotenv==1.1.1 – manejo de variables de entorno
+- openai==1.107.0 – cliente oficial de OpenAI
+- pytest==8.3.3 – testing unitario
+
+---
+
+## 🧪 Pruebas
+
+Ejecutar los tests con:
+```bash
+pytest -v
+```
+
+Se incluye validación de:
+- Respuesta del LLM con trimming (5x5 últimos mensajes).
+- Recorte correcto del historial en la API antes de devolverlo.
+
+---
+
+## 🔑 Variables de entorno
+
+Crear un archivo .env en la raíz del proyecto con:
+```env
+OPENAI_API_KEY=tu_api_key_aquí
+```
+
+⚠️ La API utiliza GPT de OpenAI como motor. Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.  
+👉 Si lo prefieren, puedo hacerles una demo con mi propia API Key en una reunión en línea.  
+
+---
+
+## 🗄️ Variables de entorno para Postgres
+
+Para levantar el entorno con Docker, crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+
+```env
+POSTGRES_USER=kopi_user
+POSTGRES_PASSWORD=kopi_password
+POSTGRES_DB=kopi_db
+POSTGRES_PORT=5432
+```

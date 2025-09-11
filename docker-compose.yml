@@ -1,0 +1,53 @@
+# docker-compose.yml
+# -------------------------------------------------
+# Orquesta la base de datos PostgreSQL en un contenedor
+# para el proyecto Kopi Debate API.
+# -------------------------------------------------
+
+version: "3.9"
+
+services:
+  db:
+    # Imagen oficial de PostgreSQL (versión estable 16)
+    image: postgres:16
+    
+    # Nombre del contenedor para identificarlo fácilmente
+    container_name: kopi_db
+    
+    # Reinicio automático salvo que lo detengas manualmente
+    restart: unless-stopped
+
+    # Variables de entorno inyectadas desde .env
+    # Debes definir:
+    #   POSTGRES_USER=usuario
+    #   POSTGRES_PASSWORD=contraseña
+    #   POSTGRES_DB=nombre_base
+    #   POSTGRES_PORT=5432 (o el que se defin por el usuario en su .env)
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: UTC
+
+    # Exposición del puerto: se mapea el puerto local al del contenedor
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+    # Volúmenes:
+    # - pg_data: persistencia de datos
+    # - ./scripts: carpeta local montada en docker-entrypoint-initdb.d
+    #              PostgreSQL ejecutará automáticamente los .sql dentro de esta ruta
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d:ro
+
+    # Healthcheck: asegura que el servicio esté "listo" antes de usarlo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s   # cada cuánto probar
+      timeout: 3s    # tiempo máximo de espera
+      retries: 10    # intentos antes de marcarlo como "unhealthy"
+
+# Declaración de volúmenes
+volumes:
+  pg_data:  # persiste los datos en disco
