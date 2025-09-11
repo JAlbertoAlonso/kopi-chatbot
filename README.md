@@ -126,3 +126,47 @@ POSTGRES_PASSWORD=kopi_password
 POSTGRES_DB=kopi_db
 POSTGRES_PORT=5432
 ```
+
+---
+
+## 🐳 Levantar con Docker y Makefile
+
+En lugar de configurar todo manualmente, puedes levantar la API y la base de datos directamente con Docker Compose y los comandos del Makefile.
+
+### Comandos principales
+
+- Levantar servicios (API + DB):
+  ```bash
+  make up
+  ```
+
+- Apagar servicios:
+  ```bash
+  make down
+  ```
+
+- Ver logs:
+  ```bash
+  make logs-api   # Logs de la API
+  make logs-db    # Logs de la base de datos
+  ```
+
+- Entrar a PostgreSQL (psql):
+  ```bash
+  make psql
+  ```
+
+- Reconstruir imágenes desde cero:
+  ```bash
+  make build
+  ```
+
+- Volcar estado de las tablas:
+  ```bash
+  make db-tables
+  ```
+
+### Persistencia
+
+Los datos se guardan en el volumen `pg_data`.  
+Esto significa que aunque detengas los contenedores o se reinicie el sistema, la información en la base de datos se conservará.
