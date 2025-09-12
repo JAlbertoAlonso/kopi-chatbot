@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
 
     # Variables de entorno inyectadas desde .env
-    # Debes definir:
+    # Definir:
     #   POSTGRES_USER=usuario
     #   POSTGRES_PASSWORD=contraseña
     #   POSTGRES_DB=nombre_base

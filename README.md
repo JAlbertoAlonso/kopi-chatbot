@@ -48,7 +48,7 @@ uvicorn app.main:app --reload
 
 - Home → http://127.0.0.1:8000/  
   ```json
-    {"ok": true, "msg": "Hello world :) | FastAPI Aestá corriendo 👋"}
+    {"ok": true, "msg": "Hello world :) | FastAPI está corriendo 👋"}
   ```
 
 - Health → http://127.0.0.1:8000/health  
@@ -127,6 +127,14 @@ POSTGRES_DB=kopi_db
 POSTGRES_PORT=5432
 ```
 
+## 🗄️ Persistencia y datos iniciales en la DB
+
+La base de datos se levanta en un contenedor de **PostgreSQL** con persistencia habilitada.  
+Los datos se almacenan en el volumen `pg_data`, lo que significa que aunque se detengan los contenedores o se reinicie el sistema, la información en la base de datos se conservará.
+
+Al ejecutarse por primera vez, Docker inicializa el esquema definido en `scripts/ddl.sql` y además carga una conversación de ejemplo mediante `scripts/seed.sql`.  
+El propósito de este *seed* es únicamente **validar que la DB está funcional y admite registros**. A partir de ahí, todas las conversaciones generadas por la API quedarán guardadas de forma persistente en el volumen.
+
 ---
 
 ## 🐳 Levantar con Docker y Makefile
@@ -166,7 +174,7 @@ En lugar de configurar todo manualmente, puedes levantar la API y la base de dat
   make db-tables
   ```
 
-### Persistencia
-
-Los datos se guardan en el volumen `pg_data`.  
-Esto significa que aunque detengas los contenedores o se reinicie el sistema, la información en la base de datos se conservará.
+- Prueba de llamada a API e inserción de mensajes en DB:
+  ```bash
+  make test-api-db
+  ```

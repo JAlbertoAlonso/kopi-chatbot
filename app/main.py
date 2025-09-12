@@ -1,18 +1,27 @@
-from fastapi import FastAPI
-from uuid import uuid4
+# app/main.py
+import asyncio
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+from fastapi import FastAPI, Depends
+from uuid import uuid4, UUID
 from typing import Dict, List
 
 from app.schemas import ChatRequest, ChatResponse, MessageTurn
 from app.llm import ask_llm
 from app.utils.trimming import trim_for_response
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import insert, select, update
+from app.db import get_db
+from app.models import Conversation, Message, MessageRole
+from datetime import datetime, timezone
+
 # Inicializamos la aplicación FastAPI
 # El título y la versión aparecerán en la documentación automática (Swagger)
-app = FastAPI(title="Kopi Debate API", version="0.2.0")
-
-# Almacenamiento temporal en memoria RAM
-# conversations = { conversation_id (str): [lista de turnos MessageTurn] }
-conversations: Dict[str, List[MessageTurn]] = {}
+app = FastAPI(title="Kopi Debate API", version="0.3.0")
 
 # Almacenamiento temporal en memoria RAM
 # conversations = { conversation_id (str): [lista de turnos MessageTurn] }
@@ -36,45 +45,103 @@ def health():
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResponse:
     """
-    Endpoint principal del chatbot.
+    Endpoint principal del chatbot (persistencia con Postgres).
 
     Flujo:
-    1. Si no se envía `conversation_id`, se crea una nueva conversación (UUID).
-    2. Recupera el historial de la conversación o lo inicializa vacío.
-    3. Agrega el mensaje del usuario al historial.
-    4. Genera la respuesta del modelo LLM (usando `ask_llm`).
-    5. Guarda el historial actualizado en memoria.
-    6. Devuelve solo los últimos 5 mensajes de cada rol (trimming de respuesta).
+    1. Si no se envía `conversation_id`, se crea una nueva conversación en la DB.
+    2. Se guarda el mensaje del usuario en la tabla `messages`.
+    3. Se consulta el historial completo de la conversación desde la DB.
+    4. Se genera la respuesta del bot con el LLM (`ask_llm`).
+    5. Se guarda la respuesta del bot en la tabla `messages`.
+    6. Se actualizan los contadores de mensajes en `conversations`.
+    7. Se devuelve el historial recortado (últimos 5 mensajes por rol).
 
     Args:
         request (ChatRequest): JSON con:
-            - `conversation_id` (opcional): ID de la conversación.
-            - `message` (obligatorio): Mensaje enviado por el usuario.
+            - `conversation_id` (opcional): UUID de la conversación.
+            - `message` (obligatorio): mensaje enviado por el usuario.
+        db (AsyncSession): Sesión de base de datos inyectada con `Depends`.
 
     Returns:
-        ChatResponse: Objeto con el `conversation_id` y la lista de turnos (user/assistant),
-                      recortada a los últimos 5 por rol.
+        ChatResponse: objeto con:
+            - `conversation_id`: UUID de la conversación.
+            - `message`: historial recortado (5x5 últimos mensajes).
     """
-    # 1) Obtener o crear conversation_id
-    conv_id: str = request.conversation_id or str(uuid4())
 
-    # 2) Recuperar historial existente o iniciar vacío
-    history: list[MessageTurn] = conversations.get(conv_id, [])
+    # 1. Crear conversación si no existe
+    if request.conversation_id is None:
+        conv = Conversation(
+            id=uuid4(),
+            topic="general",
+            stance="neutral",
+            engine="gpt-3.5-turbo",
+        )
+        db.add(conv)
+        await db.commit()
+        await db.refresh(conv)
+        conv_id = str(conv.id)
+    else:
+        conv_id = request.conversation_id
 
-    # 3) Agregar mensaje del usuario
-    history.append(MessageTurn(role="user", message=request.message))
+    # 2. Guardar mensaje del usuario
+    user_msg = Message(
+        conversation_id=UUID(conv_id),
+        role=MessageRole.user,
+        content=request.message,
+        created_at=datetime.now(timezone.utc)
+    )
+    db.add(user_msg)
+    await db.commit()
+    await db.refresh(user_msg)
 
-    # 4) Generar respuesta del bot mediante LLM
-    bot_reply: str = ask_llm(history)
-    history.append(MessageTurn(role="assistant", message=bot_reply))
+    # 3. Recuperar historial de la conversación
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == UUID(conv_id))
+        .order_by(Message.created_at)
+    )
+    history = [
+        MessageTurn(role=m.role.value, message=m.content)
+        for m in result.scalars()
+    ]
 
-    # 5) Guardar historial actualizado en memoria
-    conversations[conv_id] = history
+    # 4. Generar respuesta del bot con el historial
+    bot_reply = ask_llm(history)
 
-    # 6) Recortar historial solo para la respuesta (5 user + 5 assistant)
-    trimmed_history = trim_for_response(history)
+    # 5. Guardar respuesta del bot
+    bot_msg = Message(
+        conversation_id=UUID(conv_id),
+        role=MessageRole.assistant,
+        content=bot_reply,
+         created_at=datetime.now(timezone.utc)
+    )
+    db.add(bot_msg)
 
-    # 6) Retornar respuesta recortada y estructurada
-    return ChatResponse(conversation_id=conv_id, message=trimmed_history)
+    # 6. Actualizar contadores en la conversación
+    await db.execute(
+        update(Conversation)
+        .where(Conversation.id == UUID(conv_id))
+        .values(
+            message_count_user=Conversation.message_count_user + 1,
+            message_count_bot=Conversation.message_count_bot + 1,
+            updated_at=datetime.now(timezone.utc),
+        )
+    )
+    await db.commit()
+    await db.refresh(bot_msg)
+
+    # 7. Recuperar historial final y aplicar trimming 5x5
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conv_id)
+        .order_by(Message.created_at)
+    )
+    history = [
+        MessageTurn(role=m.role.value, message=m.content)
+        for m in result.scalars()
+    ]
+    trimmed = trim_for_response(history)
+
+    return ChatResponse(conversation_id=conv_id, message=trimmed)
