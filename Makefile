@@ -38,6 +38,7 @@ logs-api:
 logs-db:
 	$(COMPOSE) logs -f $(SERVICE_DB)
 
+
 # ======================
 # Tests
 # ======================
@@ -45,6 +46,10 @@ logs-db:
 # Ejecutar pytest con más detalle
 test:
 	pytest -v
+
+# Ejecutar solo los tests que validan la API + DB
+test-api-db:
+	pytest -v -k "test_chat_persists_messages"
 
 
 # ======================

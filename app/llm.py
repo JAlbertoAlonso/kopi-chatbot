@@ -64,8 +64,8 @@ def ask_llm(history: List[MessageTurn]) -> str:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Modelo recomendado para desarrollo
-            # model="gpt-4-turbo",  # Para entrega final
+            model="gpt-3.5-turbo",  # Modelo para desarrollo
+            # model="gpt-4-turbo",  # Modelo para entrega final
             messages=messages,
             temperature=0.7,
             max_tokens=300,
