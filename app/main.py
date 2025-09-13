@@ -5,6 +5,7 @@ import sys
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from uuid import uuid4, UUID
 from typing import Dict, List
@@ -15,17 +16,36 @@ from app.utils.trimming import trim_for_response
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, update
-from app.db import get_db
+from app.db import get_db, engine, Base
 from app.models import Conversation, Message, MessageRole
 from datetime import datetime, timezone
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Al iniciar la app: creamos/verificamos tablas
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("Tablas creadas/verificadas en la DB remota de Render")
+
+    yield  # Aquí la app se queda corriendo
+
+    # (Opcional) al cerrar la app se puede hacer cleanup
+    print("App apagándose...")
+
+
 # Inicializamos la aplicación FastAPI
 # El título y la versión aparecerán en la documentación automática (Swagger)
-app = FastAPI(title="Kopi Debate API", version="0.3.0")
+app = FastAPI(
+    title="Kopi Debate API",
+    version="0.3.0",
+    lifespan=lifespan
+)
 
 # Almacenamiento temporal en memoria RAM
 # conversations = { conversation_id (str): [lista de turnos MessageTurn] }
 conversations: Dict[str, List[MessageTurn]] = {}
+
 
 @app.get("/")
 def root():
@@ -34,6 +54,7 @@ def root():
     Devuelve un saludo simple.
     """
     return {"ok": True, "msg": "Hello world :) | FastAPI está corriendo 👋"}
+
 
 @app.get("/health")
 def health():
