@@ -40,3 +40,4 @@ class ChatResponse(BaseModel):
     """
     conversation_id: str
     message: List[MessageTurn]
+    engine: str
