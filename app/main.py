@@ -108,7 +108,11 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
     ]
 
     # 4. Generar respuesta del bot con el historial
-    bot_reply = ask_llm(history)
+    try:
+        bot_reply = ask_llm(history)
+    except Exception as e:
+        # Fallback: no rompemos la API, devolvemos mensaje seguro
+        bot_reply = "Lo siento, ocurrió un error al procesar tu mensaje."
 
     # 5. Guardar respuesta del bot
     bot_msg = Message(

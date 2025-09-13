@@ -51,6 +51,13 @@ test:
 test-api-db:
 	pytest -v -k "test_chat_persists_messages"
 
+# Ejecutar prueba de resiliencia al fallo del LLM
+test-fallback:
+	pytest -v -k "test_chat_fallback_on_llm_failure"
+
+# Ejecutar todas las pruebas (persistencia + fallback)
+tests-all: test-api-db test-fallback
+
 
 # ======================
 # Base de datos
