@@ -76,7 +76,8 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
             id=uuid4(),
             topic="general",
             stance="neutral",
-            engine="gpt-3.5-turbo",
+            # engine="gpt-4-turbo",  # Modelo para entrega final
+            engine="gpt-3.5-turbo", # Modelo para desarrollo
         )
         db.add(conv)
         await db.commit()
@@ -84,6 +85,10 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
         conv_id = str(conv.id)
     else:
         conv_id = request.conversation_id
+        result = await db.execute(
+            select(Conversation).where(Conversation.id == UUID(conv_id))
+        )
+        conv = result.scalar_one()
 
     # 2. Guardar mensaje del usuario
     user_msg = Message(
@@ -148,4 +153,6 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
     ]
     trimmed = trim_for_response(history)
 
-    return ChatResponse(conversation_id=conv_id, message=trimmed)
+    return ChatResponse(conversation_id=conv_id, 
+                        message=trimmed, 
+                        engine=conv.engine)

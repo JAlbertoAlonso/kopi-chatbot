@@ -43,20 +43,28 @@ logs-db:
 # Tests
 # ======================
 
-# Ejecutar pytest con más detalle
-test:
-	pytest -v
+# Ejecutar todos los tests
+tests-all:
+	pytest -v tests/
 
-# Ejecutar solo los tests que validan la API + DB
-test-api-db:
+# Ejecutar todos los tests (alias más corto)
+test: tests-all
+
+# Ejecutar solo los tests de persistencia en DB
+tests-api-db:
 	pytest -v -k "test_chat_persists_messages"
 
-# Ejecutar prueba de resiliencia al fallo del LLM
-test-fallback:
+# Ejecutar solo los tests de resiliencia al fallo del LLM
+tests-fallback:
 	pytest -v -k "test_chat_fallback_on_llm_failure"
 
-# Ejecutar todas las pruebas (persistencia + fallback)
-tests-all: test-api-db test-fallback
+# Ejecutar solo los tests de trimming (historial 5x5 en API y LLM)
+tests-trimming:
+	pytest -v tests/test_chat.py
+
+# Ejecutar solo los tests de performance
+tests-performance:
+	pytest -v tests/test_chat_performance.py
 
 
 # ======================
