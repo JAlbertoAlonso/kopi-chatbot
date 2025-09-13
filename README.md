@@ -18,7 +18,7 @@ Este repo contiene la primera versión del esqueleto de la aplicación.
 Clonar el repo y entrar a la carpeta:
 
 ```bash
-git clone https://github.com/<tu-usuario>/<tu-repo>.git
+git clone https://github.com/JAlbertoAlonso/kopi-chatbot.git
 cd kopi-chatbot
 ```
 
@@ -75,7 +75,8 @@ Response:
   "message": [
     {"role": "user", "message": "Hola, ¿qué tal?"},
     {"role": "assistant", "message": "¡Hola! Estoy aquí para ayudarte, ¿en qué puedo asistirte hoy?"}
-  ]
+  ],
+  "engine": "gpt-3.5-turbo"
 }
 ```
 
@@ -88,19 +89,8 @@ Response:
 - python-dotenv==1.1.1 – manejo de variables de entorno
 - openai==1.107.0 – cliente oficial de OpenAI
 - pytest==8.3.3 – testing unitario
-
----
-
-## 🧪 Pruebas
-
-Ejecutar los tests con:
-```bash
-pytest -v
-```
-
-Se incluye validación de:
-- Respuesta del LLM con trimming (5x5 últimos mensajes).
-- Recorte correcto del historial en la API antes de devolverlo.
+- sqlalchemy[asyncio]==2.x – ORM para persistencia
+- psycopg[binary]==3.x – driver para Postgres
 
 ---
 
@@ -109,6 +99,7 @@ Se incluye validación de:
 Crear un archivo .env en la raíz del proyecto con:
 ```env
 OPENAI_API_KEY=tu_api_key_aquí
+ENGINE=gpt-3.5-turbo
 ```
 
 ⚠️ La API utiliza GPT de OpenAI como motor. Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.  
@@ -178,3 +169,58 @@ En lugar de configurar todo manualmente, puedes levantar la API y la base de dat
   ```bash
   make test-api-db
   ```
+
+---
+
+## 🧪 Pruebas
+
+La suite de tests está construida con **pytest** y cubre los aspectos clave del challenge:
+
+- Persistencia en DB (creación de conversaciones y guardado de mensajes).
+- Resiliencia al fallo del LLM (fallback).
+- Trimming del historial (interno y externo).
+- Performance bajo carga ligera.
+
+### Comandos disponibles con Makefile
+
+- Ejecutar **todas las pruebas**:  
+  ```bash
+  make tests-all
+  ```
+
+- Alias rápido para correr toda la suite:  
+  ```bash
+  make test
+  ```
+
+- Ejecutar **solo persistencia en DB**:  
+  ```bash
+  make tests-api-db
+  ```
+
+- Ejecutar **solo fallback** (cuando el LLM falla):  
+  ```bash
+  make tests-fallback
+  ```
+
+- Ejecutar **solo trimming** (historial 5x5 en API y LLM):  
+  ```bash
+  make tests-trimming
+  ```
+
+- Ejecutar **solo performance** (respuesta <5s e inclusión de metadata del LLM):  
+  ```bash
+  make tests-performance
+  ```
+
+---
+
+## 🏗️ Decisiones de arquitectura
+
+- **FastAPI**: elegido por su rendimiento y facilidad de documentación con OpenAPI.  
+- **Postgres + SQLAlchemy**: garantiza persistencia y consistencia en el historial de conversaciones.  
+- **Trimming (5x5)**:  
+  - Se aplica en las **respuestas de la API** para cumplir con las especificaciones del challenge.  
+  - Se aplica en las **llamadas al LLM** para optimizar el consumo de tokens en la API de OpenAI.  
+  - En la **DB se conserva todo el historial completo**, sin recortes.  
+- **Fallback seguro**: en caso de error del LLM, la API devuelve y persiste un mensaje de fallback como `assistant`, manteniendo la coherencia de la conversación.  
