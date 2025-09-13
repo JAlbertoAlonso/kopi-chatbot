@@ -23,10 +23,14 @@ from datetime import datetime, timezone
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Al iniciar la app: creamos/verificamos tablas
+    # Mostrar a qué DB se está conectando
+    print(f"Conectando a DB en: {engine.url}")
+
+    # Forzar conexión y creación de tablas
     async with engine.begin() as conn:
+        print("Creando/verificando tablas en la DB...")
         await conn.run_sync(Base.metadata.create_all)
-    print("Tablas creadas/verificadas en la DB remota de Render")
+        print("Tablas listas en la DB remota de Render")
 
     yield  # Aquí la app se queda corriendo
 
