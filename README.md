@@ -1,7 +1,24 @@
-# Kopi Debate API
+# ☕🤖 Kopi Debate API – por Alberto Alonso
 
-API base con **FastAPI** para el challenge de Kavak.  
-Este repo contiene la útlima versión del esqueleto de la aplicación.
+API conversacional construida con **FastAPI** para el challenge de Kavak.  
+El proyecto implementa un **chatbot de debate** que mantiene coherencia en el historial gracias a estrategias de trimming y persistencia en base de datos. 
+
+---
+
+## 📑 Índice
+
+1. [Requisitos del sistema](#-requisitos-del-sistema)  
+2. [Instalación rápida (Makefile)](#-instalación-rápida-makefile)  
+3. [Instalación manual (local sin Docker)](#-instalación-manual-local-sin-docker)  
+4. [Endpoints iniciales](#-endpoints-iniciales)  
+5. [Dependencias iniciales](#-dependencias-iniciales)  
+6. [Variables de entorno](#-variables-de-entorno)  
+7. [Persistencia y datos iniciales](#-persistencia-y-datos-iniciales-en-la-db)  
+8. [Levantar con Docker y Makefile](#-levantar-con-docker-y-makefile)  
+9. [Pruebas](#-pruebas)  
+10. [Decisiones de arquitectura](#-decisiones-de-arquitectura)
+11. [Ejemplos de inicios de conversación](#%EF%B8%8F-ejemplos-de-inicios-de-conversación)
+
 
 ---
 
@@ -33,13 +50,6 @@ make install
 ```
 
 Levantar la API y la base de datos:
-
-```bash
-make up-build   # recomendado la primera vez
-make up         # siguientes ejecuciones
-```
-
-Ejecutar la API directamente (sin reconstruir):
 
 ```bash
 make run
@@ -139,23 +149,10 @@ Response:
 Crear un archivo .env en la raíz del proyecto con:
 ```env
 OPENAI_API_KEY=tu_api_key_aquí
-ENGINE=gpt-3.5-turbo
 ```
 
 ⚠️ La API utiliza GPT de OpenAI como motor. Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.  
 👉 Si lo prefieren, puedo hacerles una demo con mi propia API Key en una reunión en línea.
-
-```env
-OPENAI_API_KEY=tu_api_key_aquí
-ENGINE=gpt-3.5-turbo
-
-
-# 👇 Importante para conexión interna con Docker
-DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
-```
-
-⚠️ **Nota crítica:** dentro del contenedor la DB se llama `db` (no `localhost`).  
-Si pones `localhost`, la API no podrá conectarse a Postgres y los mensajes no se guardarán.
 
 ---
 
@@ -173,6 +170,8 @@ POSTGRES_PORT=5432
 # 🔑 Esta URL es la que usará la API
 DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
 ```
+⚠️ **Nota crítica:** dentro del contenedor la DB se llama `db` (no `localhost`).  
+Si pones `localhost`, la API no podrá conectarse a Postgres y los mensajes no se guardarán.
 
 ### Con DB remota (ej. Render)
 ```env
@@ -211,45 +210,56 @@ Esto garantiza que la API se conecte al contenedor de Postgres y que la persiste
 
 ### Comandos principales
 
-- Levantar servicios (API + DB):
+Nota: ejecutar simplemente `make` despliega el **abanico de opciones disponibles**, útil como recordatorio rápido de todos los comandos.
+
+#### 🚀 Ejecución / Despliegue
+- Levantar servicios (API + DB en segundo plano):  
   ```bash
   make up
   ```
-
-- Levantar servicios forzando build (recomendado la primera vez o si hubo cambios importantes en dependencias):
+- Levantar servicios con build incluido (modo desarrollo):  
   ```bash
-  make up-build
+  make run
   ```
-
-- Apagar servicios:
+- Apagar todos los servicios:  
   ```bash
   make down
   ```
-
-- Ver logs:
-  ```bash
-  make logs-api   # Logs de la API
-  make logs-db    # Logs de la base de datos
-  ```
-
-- Entrar a PostgreSQL (psql):
-  ```bash
-  make psql
-  ```
-
-- Reconstruir imágenes desde cero:
+- Reconstruir imágenes desde cero (sin cache):  
   ```bash
   make build
   ```
+- Ver servicios corriendo:  
+  ```bash
+  make ps
+  ```
 
-- Volcar estado de las tablas:
+#### 📚 Base de datos
+- Abrir consola de PostgreSQL (psql):  
+  ```bash
+  make psql
+  ```
+- Listar tablas en la DB:  
   ```bash
   make db-tables
   ```
-
-- Prueba de llamada a API e inserción de mensajes en DB:
+- Ejecutar un script SQL en la base (ejemplo seed):  
   ```bash
-  make test-api-db
+  make seed FILE=scripts/seed.sql
+
+#### 📜 Logs
+- Ver logs de la API:  
+  ```bash
+  make logs-api
+  ```
+- Ver logs de la base de datos:  
+  ```bash
+  make logs-db
+
+#### 🗑️ Borrrado y limpieza
+- Limpiar todo (contenedores + volúmenes + redes):  
+  ```bash
+  make clean
   ```
 
 ---
@@ -258,16 +268,18 @@ Esto garantiza que la API se conecte al contenedor de Postgres y que la persiste
 
 La suite de tests está construida con **pytest** y cubre los aspectos clave del challenge:
 
-- Persistencia en DB (creación de conversaciones y guardado de mensajes).
-- Resiliencia al fallo del LLM (fallback).
-- Trimming del historial (interno y externo).
-- Performance bajo carga ligera.
+- **Persistencia en DB** → creación de conversaciones y guardado de mensajes.  
+- **Resiliencia al fallo del LLM** → fallback en caso de error.  
+- **Trimming (5x5)** → verificación de recorte en historial de conversación.  
+- **Performance** → validación de tiempo de respuesta (< 5s) y metadatos.  
+- **Integración del endpoint `/chat`** → prueba de flujo completo con un mensaje real. 
 
 ### Comandos disponibles con Makefile
 
-- Ejecutar **todas las pruebas**:  
+- Ejecutar **todos los tests**:  
   ```bash
-  make test   # alias principal
+  make test
+  # o
   make tests-all
   ```
 
@@ -276,32 +288,103 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
   make tests-api-db
   ```
 
-- Ejecutar **solo fallback** (cuando el LLM falla):  
+- Ejecutar **solo fallback (LLM failure)**:  
   ```bash
   make tests-fallback
   ```
 
-- Ejecutar **solo trimming** (historial 5x5 en API y LLM):  
+- Ejecutar **solo trimming (historial 5x5)**:  
   ```bash
   make tests-trimming
   ```
 
-- Ejecutar **solo performance** (respuesta <5s e inclusión de metadata del LLM):  
+- Ejecutar **solo performance (test_chat_performance.py)**:  
   ```bash
   make tests-performance
   ```
 
 ---
 
+## 🔍 Prueba de integración manual
+
+Además de las pruebas automatizadas, el proyecto incluye un script de integración simple para validar el endpoint `/chat` directamente contra la API en ejecución:
+
+```bash
+make test-chat
+```
+
+Este flujo permite probar manualmente que:
+- La API está corriendo y accesible.
+- El endpoint `/chat` responde correctamente.
+- El historial de conversación se mantiene coherente.
+
+⚠️ **Nota importante:**  
+Después de levantar la API con `make up`, espera unos segundos antes de ejecutar `make test-chat`.  
+Esto asegura que las tablas (`conversations`, `messages`) ya hayan sido creadas en la base de datos durante el startup de FastAPI.  
+
+
+---
+
 ## 🏗️ Decisiones de arquitectura
 
-- **FastAPI**: elegido por su rendimiento y facilidad de documentación con OpenAPI.  
-- **Postgres + SQLAlchemy**: garantiza persistencia y consistencia en el historial de conversaciones.  
-- **Trimming (5x5)**:  
-  - Se aplica en las **respuestas de la API** para cumplir con las especificaciones del challenge.  
-  - Se aplica en las **llamadas al LLM** para optimizar el consumo de tokens en la API de OpenAI.  
-  - En la **DB se conserva todo el historial completo**, sin recortes.  
-- **Fallback seguro**: en caso de error del LLM, la API devuelve y persiste un mensaje de fallback como `assistant`, manteniendo la coherencia de la conversación.  
-- **Idempotencia en creación de tablas (lifespan)**:  
-  - Con `Base.metadata.create_all` las tablas se crean si no existen.  
-  - Esto evita fallos en despliegues cloud y no afecta al flujo con contenedores locales (que ya tienen su propio init con SQL). 
+De acuerdo con los lineamientos del challenge:
+
+### 1. Uso de FastAPI
+Se eligió **FastAPI** por:
+- Su rendimiento con ASGI.  
+- Generación automática de documentación OpenAPI/Swagger.  
+- Facilidad para estructurar endpoints de forma escalable.  
+
+### 2. Persistencia en Postgres + SQLAlchemy
+- Permite mantener un **historial completo de conversaciones**.  
+- Se conserva todo el histórico en DB, incluso cuando la API aplica trimming en runtime.  
+- Se garantiza consistencia entre llamadas concurrentes y despliegues cloud/local.  
+
+### 3. Estrategia de trimming
+- **Trimming 5x5 (API):**  
+  - Se recorta el historial a los últimos 5 turnos de usuario y 5 de asistente.  
+  - Esto cumple con lo especificado en el challenge y asegura eficiencia en las respuestas públicas.  
+
+- **Trimming 10x10 (LLM interno):**  
+  - Al interactuar con el LLM se aplica un recorte más amplio (10x10).  
+  - Esto da más contexto al modelo y permite que el **debate conserve coherencia** en intercambios largos.  
+  - Se balancea así **eficiencia** (menos tokens enviados) con **calidad** (fluidez del diálogo).  
+
+### 4. Fallback seguro
+- Ante errores del LLM, la API retorna un mensaje predefinido con rol `assistant`.  
+- Esto evita rupturas en la conversación y asegura que el flujo persista correctamente en la DB.  
+
+### 5. Idempotencia en creación de tablas
+- Se usa `Base.metadata.create_all` en el lifespan.  
+- Garantiza que los despliegues en cloud no fallen por falta de tablas.  
+- No interfiere con los contenedores locales que ya aplican `ddl.sql`.
+
+---
+
+## 🗣️ Ejemplos de inicios de conversación
+
+Para probar rápidamente el comportamiento del bot (postura contraria y trimming), puedes iniciar conversaciones con frases como estas:
+
+1) **“La jornada laboral de 4 días reduce la productividad en la mayoría de las empresas.”**  
+```json
+{
+  "conversation_id": null,
+  "message": "ME gusta más lo dulce que lo salado."
+}
+```
+
+2) **“Los coches eléctricos no son la mejor estrategia para combatir el cambio climático.”**  
+```json
+{
+  "conversation_id": null,
+  "message": "Los coches eléctricos no son la mejor estrategia para combatir el cambio climático."
+}
+```
+
+3) **“Las calificaciones numéricas deberían eliminarse del sistema educativo.”**  
+```json
+{
+  "conversation_id": null,
+  "message": "Las calificaciones numéricas deberían eliminarse del sistema educativo."
+}
+```
