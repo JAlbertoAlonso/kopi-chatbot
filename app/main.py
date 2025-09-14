@@ -99,7 +99,7 @@ async def lifespan(app: FastAPI):
 # El título y la versión aparecerán en la documentación automática (Swagger)
 app = FastAPI(
     title="Kopi Debate API",
-    version="0.3.0",
+    version="1.0.0",
     lifespan=lifespan
 )
 
