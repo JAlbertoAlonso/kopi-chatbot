@@ -103,7 +103,20 @@ ENGINE=gpt-3.5-turbo
 ```
 
 ⚠️ La API utiliza GPT de OpenAI como motor. Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.  
-👉 Si lo prefieren, puedo hacerles una demo con mi propia API Key en una reunión en línea.  
+👉 Si lo prefieren, puedo hacerles una demo con mi propia API Key en una reunión en línea.
+
+```env
+OPENAI_API_KEY=tu_api_key_aquí
+ENGINE=gpt-3.5-turbo
+
+
+# 👇 Importante para conexión interna con Docker
+DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
+```
+
+⚠️ La API utiliza GPT de OpenAI como motor.  
+⚠️ **Nota crítica:** dentro del contenedor la DB se llama `db` (no `localhost`).  
+Si pones `localhost`, la API no podrá conectarse a Postgres y los mensajes no se guardarán.
 
 ---
 
@@ -117,6 +130,9 @@ POSTGRES_USER=kopi_user
 POSTGRES_PASSWORD=kopi_password
 POSTGRES_DB=kopi_db
 POSTGRES_PORT=5432
+
+# 🔑 Esta URL es la que usará la API
+DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
 ```
 
 ### Con DB remota (ej. Render)
@@ -146,6 +162,13 @@ El propósito de este *seed* es únicamente **validar que la DB está funcional 
 ## 🐳 Levantar con Docker y Makefile
 
 En lugar de configurar todo manualmente, puedes levantar la API y la base de datos directamente con Docker Compose y los comandos del Makefile.
+
+⚠️ Asegúrate de que tu .env tenga:
+```env
+DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
+```
+antes de correr make up.
+Esto garantiza que la API se conecte al contenedor de Postgres y que la persistencia funcione correctamente.
 
 ### Comandos principales
 
