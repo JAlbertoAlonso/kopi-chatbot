@@ -15,8 +15,9 @@ Base = declarative_base()
 # o se define un valor por defecto apuntando al contenedor "db"
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat"
+    # "postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat"
 )
+print(f"Conectando a DB en: {DATABASE_URL}")
 
 # Crea el engine asíncrono
 engine = create_async_engine(
