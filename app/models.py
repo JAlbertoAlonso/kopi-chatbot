@@ -14,7 +14,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, declarative_base
 
 # Base declarativa de SQLAlchemy
-Base = declarative_base()
+# Base = declarative_base()
+from app.db import Base
 
 # Enum de roles de mensajes (igual al ENUM definido en DDL.sql)
 class MessageRole(enum.Enum):
