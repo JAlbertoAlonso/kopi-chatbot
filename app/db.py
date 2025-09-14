@@ -11,18 +11,14 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # Base declarativa para que los modelos la usen si no la importan aparte
 Base = declarative_base()
 
-# URL de conexión: se obtiene de la variable de entorno DATABASE_URL,
-# o se define un valor por defecto apuntando al contenedor "db"
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    # "postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat"
-)
+# URL de conexión: se obtiene de la variable de entorno DATABASE_URL
+DATABASE_URL = os.getenv("DATABASE_URL")
 print(f"Conectando a DB en: {DATABASE_URL}")
 
 # Crea el engine asíncrono
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,        # True = log de todas las queries (útil en desarrollo)
+    echo=True,        # True = log de todas las queries 
     future=True
 )
 
@@ -31,7 +27,7 @@ AsyncSessionLocal = sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autoflush=False,   # 🔑 evita commits/flush automáticos molestos
+    autoflush=False,   # Evita commits/flush automáticos molestos
     autocommit=False
 )
 
