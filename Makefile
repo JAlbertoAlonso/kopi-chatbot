@@ -22,6 +22,10 @@ SERVICE_DB = db
 up:
 	$(COMPOSE) up -d
 
+# Levantar todo el stack forzando build de imágenes (primera vez recomendado)
+up-build:
+	$(COMPOSE) up -d --build
+
 # Apagar todos los servicios
 down:
 	$(COMPOSE) down
@@ -37,6 +41,19 @@ logs-api:
 # Ver logs de la base de datos
 logs-db:
 	$(COMPOSE) logs -f $(SERVICE_DB)
+
+
+# ======================
+# Instalación / Ejecución local
+# ======================
+
+# Instalar dependencias en entorno virtual local
+install:
+	pip install -r requirements.txt
+
+# Ejecutar la API en local (fuera de Docker)
+run:
+	uvicorn app.main:app --reload
 
 
 # ======================

@@ -13,7 +13,45 @@ Este repo contiene la útlima versión del esqueleto de la aplicación.
 
 ---
 
-## ⚙️ Instalación y ejecución en local
+## ⚙️ Instalación rápida (Makefile)
+
+Si quieres levantar todo con **Docker Compose** y el **Makefile**, este es el camino recomendado:
+
+Clonar el repo y entrar a la carpeta:
+
+```bash
+git clone https://github.com/JAlbertoAlonso/kopi-chatbot.git
+cd kopi-chatbot
+```
+
+Crear el archivo `.env` en la raíz (usa el ejemplo del README).
+
+Instalar dependencias en el entorno local:
+
+```bash
+make install
+```
+
+Levantar la API y la base de datos:
+
+```bash
+make up-build   # recomendado la primera vez
+make up         # siguientes ejecuciones
+```
+
+Ejecutar la API directamente (sin reconstruir):
+
+```bash
+make run
+```
+
+👉 Este flujo asegura que la API se conecta al contenedor de Postgres y que la persistencia funciona correctamente.
+
+---
+
+## ⚙️ Instalación manual (local sin Docker)
+
+Si prefieres ejecutar sin Docker, debes tener una base de datos Postgres corriendo localmente o en remoto, y configurarla en `.env`.
 
 Clonar el repo y entrar a la carpeta:
 
@@ -41,6 +79,8 @@ Ejecutar el servidor local con Uvicorn:
 ```bash
 uvicorn app.main:app --reload
 ```
+
+👉 Este flujo **no levanta Postgres en contenedor**. Deberás conectarte a una DB externa o ya configurada localmente.
 
 ---
 
@@ -114,7 +154,6 @@ ENGINE=gpt-3.5-turbo
 DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
 ```
 
-⚠️ La API utiliza GPT de OpenAI como motor.  
 ⚠️ **Nota crítica:** dentro del contenedor la DB se llama `db` (no `localhost`).  
 Si pones `localhost`, la API no podrá conectarse a Postgres y los mensajes no se guardarán.
 
@@ -142,7 +181,7 @@ DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DBNAME
 
 ---
 
-## 🗄️ Persistencia y datos iniciales en la DB
+## 💾 Persistencia y datos iniciales en la DB
 
 - En local (Docker):
 La base de datos se levanta en un contenedor de **PostgreSQL** con persistencia habilitada.  
@@ -175,6 +214,11 @@ Esto garantiza que la API se conecte al contenedor de Postgres y que la persiste
 - Levantar servicios (API + DB):
   ```bash
   make up
+  ```
+
+- Levantar servicios forzando build (recomendado la primera vez o si hubo cambios importantes en dependencias):
+  ```bash
+  make up-build
   ```
 
 - Apagar servicios:
@@ -223,12 +267,8 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
 
 - Ejecutar **todas las pruebas**:  
   ```bash
+  make test   # alias principal
   make tests-all
-  ```
-
-- Alias rápido para correr toda la suite:  
-  ```bash
-  make test
   ```
 
 - Ejecutar **solo persistencia en DB**:  
