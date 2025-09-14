@@ -12,13 +12,12 @@ El proyecto implementa un **chatbot de debate** que mantiene coherencia en el hi
 3. [Instalación manual (local sin Docker)](#-instalación-manual-local-sin-docker)  
 4. [Endpoints iniciales](#-endpoints-iniciales)  
 5. [Dependencias iniciales](#-dependencias-iniciales)  
-6. [Variables de entorno](#-variables-de-entorno)  
-7. [Persistencia y datos iniciales](#-persistencia-y-datos-iniciales-en-la-db)  
+6. [Configuración de entorno](#-configuración-de-entorno)  
+7. [Persistencia de datos](#-persistencia-de-datos)  
 8. [Levantar con Docker y Makefile](#-levantar-con-docker-y-makefile)  
 9. [Pruebas](#-pruebas)  
-10. [Decisiones de arquitectura](#-decisiones-de-arquitectura)
-11. [Ejemplos de inicios de conversación](#%EF%B8%8F-ejemplos-de-inicios-de-conversación)
-
+10. [Decisiones de arquitectura y estrategias](#-decisiones-de-arquitectura-y-estrategias)  
+11. [Ejemplos de inicios de conversación](#-ejemplos-de-inicios-de-conversación)
 
 ---
 
@@ -144,123 +143,105 @@ Response:
 
 ---
 
-## 🔑 Variables de entorno
+## 🔑 Configuración de entorno
 
-Crear un archivo .env en la raíz del proyecto con:
+Este proyecto requiere algunas variables de entorno definidas en un archivo `.env` en la raíz del repositorio.
+
+### OpenAI
 ```env
 OPENAI_API_KEY=tu_api_key_aquí
 ```
+⚠️ La API utiliza GPT de OpenAI como motor.  
+Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.
 
-⚠️ La API utiliza GPT de OpenAI como motor. Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.  
-👉 Si lo prefieren, puedo hacerles una demo con mi propia API Key en una reunión en línea.
+### Postgres
+Existen dos formas de conexión: con contenedores locales (Docker) o con una base de datos remota (ej. Render).
 
----
-
-## 🗄️ Variables de entorno para Postgres
-
-Existen dos formas de conexión: **modo local (contenedores)** y **modo remoto (Render u otro servicio en la nube)**.
-
-### Con contenedores internos
+#### Con contenedores internos
 ```env
 POSTGRES_USER=kopi_user
 POSTGRES_PASSWORD=kopi_password
 POSTGRES_DB=kopi_db
 POSTGRES_PORT=5432
 
-# 🔑 Esta URL es la que usará la API
+# Esta URL es la que usará la API
 DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
 ```
 ⚠️ **Nota crítica:** dentro del contenedor la DB se llama `db` (no `localhost`).  
 Si pones `localhost`, la API no podrá conectarse a Postgres y los mensajes no se guardarán.
 
-### Con DB remota (ej. Render)
+#### Con DB remota (ej. Render)
 ```env
 DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DBNAME
 ```
 
 ---
 
-## 💾 Persistencia y datos iniciales en la DB
+## 💾 Persistencia de datos
 
-- En local (Docker):
-La base de datos se levanta en un contenedor de **PostgreSQL** con persistencia habilitada.  
-Los datos se almacenan en el volumen `pg_data`, lo que significa que aunque se detengan los contenedores o se reinicie el sistema, la información en la base de datos se conservará.
+La API persiste todas las conversaciones en **PostgreSQL** mediante **SQLAlchemy Async**.  
 
-Al ejecutarse por primera vez, Docker inicializa el esquema definido en `scripts/ddl.sql` y además carga una conversación de ejemplo mediante `scripts/seed.sql`.  
-El propósito de este *seed* es únicamente **validar que la DB está funcional y admite registros**. A partir de ahí, todas las conversaciones generadas por la API quedarán guardadas de forma persistente en el volumen.
+- **Local (Docker):**  
+  Se usa un volumen `pg_data` para conservar información entre reinicios.  
+  Al iniciar por primera vez, se ejecutan `scripts/ddl.sql` y `scripts/seed.sql` para validar que la DB acepta registros.  
 
-- En remoto (Render):  
-  La app usa un `lifespan` que asegura la **idempotencia** al crear tablas (`create_all`).  
-  Esto significa que, si ya existen, no se duplican ni borran.  
-  Así se garantiza que la API puede correr sin errores en despliegues cloud.  
-  ⚠️ Esto **no interfiere** con contenedores locales, porque Docker sigue aplicando los `ddl.sql` al levantar.
+- **Remoto (Render u otro servicio cloud):**  
+  La API asegura la **idempotencia** en la creación de tablas usando el ciclo de vida (`lifespan`).  
+  Esto evita fallos al desplegar en la nube y no interfiere con la inicialización de Docker.  
+
+👉 Para más detalles, ver:  
+- [ADR-0003: Persistencia en Postgres + SQLAlchemy](docs/adr/0003-persistence-postgres-sqlalchemy.md)  
+- [ADR-0006: Idempotencia en creación de tablas](docs/adr/0006-db-idempotence.md)
+
 
 ---
 
 ## 🐳 Levantar con Docker y Makefile
 
-En lugar de configurar todo manualmente, puedes levantar la API y la base de datos directamente con Docker Compose y los comandos del Makefile.
+Puedes levantar la API y la base de datos directamente con **Docker Compose** usando los comandos del Makefile.
 
-⚠️ Asegúrate de que tu .env tenga:
+⚠️ Antes de iniciar, asegúrate de que tu `.env` tenga configurada correctamente la variable `DATABASE_URL`.  
+Ejemplo con contenedores locales:
 ```env
 DATABASE_URL=postgresql+asyncpg://kopi:kopi_password@db:5432/kopi_chat
 ```
-antes de correr make up.
-Esto garantiza que la API se conecte al contenedor de Postgres y que la persistencia funcione correctamente.
 
 ### Comandos principales
 
-Nota: ejecutar simplemente `make` despliega el **abanico de opciones disponibles**, útil como recordatorio rápido de todos los comandos.
-
-#### 🚀 Ejecución / Despliegue
-- Levantar servicios (API + DB en segundo plano):  
+- Mostrar todos los comandos disponibles:  
   ```bash
-  make up
+  make
   ```
-- Levantar servicios con build incluido (modo desarrollo):  
+
+- Instalar dependencias en entorno local:  
+  ```bash
+  make install
+  ```
+
+- Ejecutar toda la suite de tests:  
+  ```bash
+  make test
+  ```
+
+- Levantar servicios (API + DB en Docker):  
   ```bash
   make run
   ```
-- Apagar todos los servicios:  
+
+- Apagar servicios:  
   ```bash
   make down
   ```
-- Reconstruir imágenes desde cero (sin cache):  
-  ```bash
-  make build
-  ```
-- Ver servicios corriendo:  
-  ```bash
-  make ps
-  ```
 
-#### 📚 Base de datos
-- Abrir consola de PostgreSQL (psql):  
-  ```bash
-  make psql
-  ```
-- Listar tablas en la DB:  
-  ```bash
-  make db-tables
-  ```
-- Ejecutar un script SQL en la base (ejemplo seed):  
-  ```bash
-  make seed FILE=scripts/seed.sql
-
-#### 📜 Logs
-- Ver logs de la API:  
-  ```bash
-  make logs-api
-  ```
-- Ver logs de la base de datos:  
-  ```bash
-  make logs-db
-
-#### 🗑️ Borrrado y limpieza
 - Limpiar todo (contenedores + volúmenes + redes):  
   ```bash
   make clean
   ```
+
+👉 El Makefile incluye comandos adicionales útiles (logs, psql, seed, etc.). Para verlos todos, ejecuta simplemente:
+```bash
+make
+```
 
 ---
 
@@ -269,39 +250,40 @@ Nota: ejecutar simplemente `make` despliega el **abanico de opciones disponibles
 La suite de tests está construida con **pytest** y cubre los aspectos clave del challenge:
 
 - **Persistencia en DB** → creación de conversaciones y guardado de mensajes.  
-- **Resiliencia al fallo del LLM** → fallback en caso de error.  
-- **Trimming (5x5)** → verificación de recorte en historial de conversación.  
-- **Performance** → validación de tiempo de respuesta (< 5s) y metadatos.  
-- **Integración del endpoint `/chat`** → prueba de flujo completo con un mensaje real. 
+- **Fallback en caso de error del LLM** → resiliencia del sistema.  
+- **Trimming (5x5)** → recorte del historial expuesto por la API.  
+- **Performance** → tiempo de respuesta < 5s y metadatos correctos.  
+- **Integración del endpoint `/chat`** → flujo completo con un mensaje real.  
 
-### Comandos disponibles con Makefile
+### Comandos principales
 
-- Ejecutar **todos los tests**:  
+- Ejecutar todos los tests:  
   ```bash
   make test
-  # o
-  make tests-all
   ```
 
-- Ejecutar **solo persistencia en DB**:  
+- Ejecutar pruebas específicas:  
   ```bash
-  make tests-api-db
+  make tests-api-db       # persistencia en DB
+  make tests-fallback     # fallback del LLM
+  make tests-trimming     # trimming 5x5
+  make tests-performance  # performance
   ```
 
-- Ejecutar **solo fallback (LLM failure)**:  
-  ```bash
-  make tests-fallback
-  ```
+### Prueba manual rápida
 
-- Ejecutar **solo trimming (historial 5x5)**:  
-  ```bash
-  make tests-trimming
-  ```
+El proyecto incluye un script de integración simple para validar el endpoint `/chat` directamente:
 
-- Ejecutar **solo performance (test_chat_performance.py)**:  
-  ```bash
-  make tests-performance
-  ```
+```bash
+make test-chat
+```
+
+Esto permite comprobar que:
+- La API está corriendo y accesible.  
+- El endpoint `/chat` responde correctamente.  
+- El historial de conversación se mantiene coherente.  
+
+⚠️ Nota: después de levantar la API con `make up`, espera unos segundos antes de ejecutar `make test-chat` para que las tablas se creen en la DB.
 
 ---
 
@@ -325,39 +307,21 @@ Esto asegura que las tablas (`conversations`, `messages`) ya hayan sido creadas 
 
 ---
 
-## 🏗️ Decisiones de arquitectura
+## 🏗️ Decisiones de arquitectura y estrategias 
 
-De acuerdo con los lineamientos del challenge:
+Este proyecto incluye varias decisiones clave documentadas como ADRs (Architecture Decision Records).
 
-### 1. Uso de FastAPI
-Se eligió **FastAPI** por:
-- Su rendimiento con ASGI.  
-- Generación automática de documentación OpenAPI/Swagger.  
-- Facilidad para estructurar endpoints de forma escalable.  
-
-### 2. Persistencia en Postgres + SQLAlchemy
-- Permite mantener un **historial completo de conversaciones**.  
-- Se conserva todo el histórico en DB, incluso cuando la API aplica trimming en runtime.  
-- Se garantiza consistencia entre llamadas concurrentes y despliegues cloud/local.  
-
-### 3. Estrategia de trimming
-- **Trimming 5x5 (API):**  
-  - Se recorta el historial a los últimos 5 turnos de usuario y 5 de asistente.  
-  - Esto cumple con lo especificado en el challenge y asegura eficiencia en las respuestas públicas.  
-
-- **Trimming 10x10 (LLM interno):**  
-  - Al interactuar con el LLM se aplica un recorte más amplio (10x10).  
-  - Esto da más contexto al modelo y permite que el **debate conserve coherencia** en intercambios largos.  
-  - Se balancea así **eficiencia** (menos tokens enviados) con **calidad** (fluidez del diálogo).  
-
-### 4. Fallback seguro
-- Ante errores del LLM, la API retorna un mensaje predefinido con rol `assistant`.  
-- Esto evita rupturas en la conversación y asegura que el flujo persista correctamente en la DB.  
-
-### 5. Idempotencia en creación de tablas
-- Se usa `Base.metadata.create_all` en el lifespan.  
-- Garantiza que los despliegues en cloud no fallen por falta de tablas.  
-- No interfiere con los contenedores locales que ya aplican `ddl.sql`.
+- ADR-0001: [Elección del motor LLM](docs/adr/0001-llm-decision.md)
+- ADR-0002: [Framework FastAPI](docs/adr/0002-framework-fastapi.md)
+- ADR-0003: [Persistencia en Postgres + SQLAlchemy](docs/adr/0003-persistence-postgres-sqlalchemy.md)
+- ADR-0004: [Estrategia de trimming](docs/adr/0004-trimming-strategy.md)
+- ADR-0005: [Fallback seguro](docs/adr/0005-fallback-strategy.md)
+- ADR-0006: [Idempotencia en creación de tablas](docs/adr/0006-db-idempotence.md)
+- ADR-0007: [Manejo de conversación con UUIDs](docs/adr/0007-conversation-uuid.md)
+- ADR-0008: [Postura fija en debate](docs/adr/0008-stand-your-ground.md)
+- ADR-0009: [Testing asíncrono con pytest-asyncio](docs/adr/0009-testing-async.md)
+- ADR-0010: [Contenerización con Docker + Makefile](docs/adr/0010-docker-makefile.md)
+- ADR-0011: [Despliegue en Render](docs/adr/0011-deployment-render.md)
 
 ---
 

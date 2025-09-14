@@ -51,7 +51,7 @@ help:
 	@echo "  make tests-fallback  Ejecuta solo tests de fallback del LLM."
 	@echo "  make tests-trimming  Ejecuta solo tests de trimming 5x5."
 	@echo "  make tests-performance Ejecuta solo tests de performance."
-	@echo "  make test-chat       Ejecuta prueba manual de /chat con pytest."
+	@echo "  make test-chat       Ejecuta prueba manual de /chat fuera de los test de validacion."
 	@echo "  make psql            Abre consola psql contra la DB del contenedor."
 	@echo "  make db-tables       Lista las tablas en la DB."
 	@echo "  make seed FILE=...   Ejecuta un script SQL dentro de la DB."
