@@ -1,9 +1,37 @@
-# -------------------------------------------------
-# Makefile para Kopi Debate API
-# -------------------------------------------------
-# Simplificado de comandos comunes: levantar la app, correr tests,
-# construir contenedores, conectarse a la DB, etc.
-# -------------------------------------------------
+# -------------------------------------------------------------------
+# Makefile - Kopi Debate API
+#
+# Propósito:
+# ----------
+# Simplificar y estandarizar la ejecución de comandos frecuentes en el
+# ciclo de desarrollo y pruebas del proyecto.
+#
+# Funcionalidad principal:
+# ------------------------
+# • Orquestación de contenedores (API y DB) vía Docker Compose.
+# • Instalación de dependencias en entorno local (sin Docker).
+# • Ejecución de la suite de tests completa o segmentada (DB, fallback,
+#   trimming, performance).
+# • Comandos para inspección y administración de la base de datos
+#   (psql, listar tablas, ejecutar seeds).
+# • Utilidades para ver logs, limpiar contenedores, y mostrar servicios
+#   en ejecución.
+#
+# Beneficios:
+# -----------
+# - Evita recordar comandos largos de Docker o pytest.
+# - Facilita la integración de nuevos desarrolladores al proyecto.
+# - Asegura consistencia en la ejecución de tareas comunes.
+#
+# Uso básico:
+# -----------
+#   make help        → muestra todos los comandos disponibles
+#   make run         → levanta API y DB en modo desarrollo
+#   make test        → ejecuta todos los tests
+#   make psql        → abre consola interactiva en la DB
+#   make clean       → limpia contenedores, volúmenes y redes
+# -------------------------------------------------------------------
+
 
 # Target por defecto: mostrar ayuda si solo ejecutan `make`
 .DEFAULT_GOAL := help

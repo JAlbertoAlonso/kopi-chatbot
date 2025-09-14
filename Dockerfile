@@ -1,3 +1,30 @@
+# -------------------------------------------------------------------
+# Dockerfile
+#
+# Propósito:
+# ----------
+# Construir una imagen ligera y reproducible de la API (FastAPI + PostgreSQL).
+#
+# Flujo de construcción:
+# ----------------------
+# 1. Parte de una imagen base oficial de Python 3.12 slim.
+# 2. Define variables de entorno para evitar problemas de buffering
+#    y archivos .pyc innecesarios.
+# 3. Crea el directorio de trabajo /app dentro del contenedor.
+# 4. Instala dependencias del sistema necesarias para compilar librerías,
+#    incluyendo soporte para PostgreSQL (libpq-dev).
+# 5. Copia requirements.txt e instala dependencias de Python.
+# 6. Copia el código fuente completo de la aplicación.
+# 7. Expone el puerto 8000 (por defecto de Uvicorn/FastAPI).
+# 8. Define el comando por defecto: arrancar la aplicación con Uvicorn,
+#    accesible en 0.0.0.0:8000.
+#
+# Resultado:
+# ----------
+# Imagen optimizada para levantar la API de FastAPI de forma portable,
+# lista para usarse en Docker Compose o despliegue en Render/AWS/etc.
+# -------------------------------------------------------------------
+
 # Imagen base ligera de Python
 FROM python:3.12-slim
 

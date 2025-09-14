@@ -1,3 +1,30 @@
+"""
+Módulo de utilidades para recortar historiales de conversación (app/utils/trimming.py).
+
+Propósito:
+----------
+Evitar que el historial de mensajes crezca indefinidamente y consuma demasiados
+recursos al momento de generar respuestas con el LLM.
+
+Funciones principales:
+----------------------
+- trim_history():
+    Recorta el historial completo conservando únicamente los últimos `N` mensajes 
+    del usuario y del asistente (por defecto 10 y 10).
+    Se utiliza en procesos internos donde se requiere limitar memoria/DB.
+
+- trim_for_response():
+    Recorta el historial antes de devolverlo en la API.
+    Conserva un máximo de `N` mensajes del usuario y del asistente 
+    (por defecto 5 y 5), devolviendo un total acotado de 10 turnos.
+    Incluye opción de depuración activable con la variable de entorno `DEBUG_TRIM=1`.
+
+Notas:
+------
+- Ambos métodos mantienen el orden cronológico de los mensajes.
+- El objetivo es balancear entre contexto suficiente y eficiencia en el response.
+"""
+
 import os
 from typing import List
 from app.schemas import MessageTurn
