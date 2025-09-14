@@ -5,6 +5,31 @@
 # construir contenedores, conectarse a la DB, etc.
 # -------------------------------------------------
 
+# Target por defecto: mostrar ayuda si solo ejecutan `make`
+.DEFAULT_GOAL := help
+
+# Ayuda: lista todos los comandos disponibles
+help:
+	@echo "Comandos disponibles en Kopi Debate API:"
+	@echo "  make run             Levanta la API y DB en contenedores (build incluido)."
+	@echo "  make up              Levanta los contenedores en segundo plano."
+	@echo "  make down            Detiene y elimina los contenedores."
+	@echo "  make build           Reconstruye las imágenes desde cero."
+	@echo "  make logs-api        Muestra logs de la API."
+	@echo "  make logs-db         Muestra logs de la base de datos."
+	@echo "  make install         Instala dependencias en entorno local (sin Docker)."
+	@echo "  make test            Ejecuta toda la suite de pruebas."
+	@echo "  make tests-api-db    Ejecuta solo tests de persistencia en DB."
+	@echo "  make tests-fallback  Ejecuta solo tests de fallback del LLM."
+	@echo "  make tests-trimming  Ejecuta solo tests de trimming 5x5."
+	@echo "  make tests-performance Ejecuta solo tests de performance."
+	@echo "  make test-chat       Ejecuta prueba manual de /chat con pytest."
+	@echo "  make psql            Abre consola psql contra la DB del contenedor."
+	@echo "  make db-tables       Lista las tablas en la DB."
+	@echo "  make seed FILE=...   Ejecuta un script SQL dentro de la DB."
+	@echo "  make ps              Muestra servicios corriendo."
+	@echo "  make clean           Limpia contenedores, volúmenes y redes."
+
 include .env
 export
 
@@ -18,13 +43,9 @@ SERVICE_DB = db
 # Comandos principales
 # ======================
 
-# Levantar todo el stack en segundo plano (API + DB)
+# Levantar servicios ya construidos, todo el stack en segundo plano (API + DB)
 up:
 	$(COMPOSE) up -d
-
-# Levantar todo el stack forzando build de imágenes (primera vez recomendado)
-up-build:
-	$(COMPOSE) up -d --build
 
 # Apagar todos los servicios
 down:
@@ -51,9 +72,9 @@ logs-db:
 install:
 	pip install -r requirements.txt
 
-# Ejecutar la API en local (fuera de Docker)
+# Ejecutar la API y la DB en contenedores (modo desarrollo)
 run:
-	uvicorn app.main:app --reload
+	$(COMPOSE) up -d --build
 
 
 # ======================
@@ -82,6 +103,10 @@ tests-trimming:
 # Ejecutar solo los tests de performance
 tests-performance:
 	pytest -v tests/test_chat_performance.py
+
+# Ejecutar la prueba de integración del endpoint /chat
+test-chat:
+	pytest -v tests/test_chat_debate.py
 
 
 # ======================

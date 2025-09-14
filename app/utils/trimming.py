@@ -2,7 +2,7 @@ import os
 from typing import List
 from app.schemas import MessageTurn
 
-def trim_history(history: List[MessageTurn], max_user: int = 5, max_assistant: int = 5) -> List[MessageTurn]:
+def trim_history(history: List[MessageTurn], max_user: int = 10, max_assistant: int = 10) -> List[MessageTurn]:
     """
     Recorta el historial de la conversación a los últimos `max_user` turnos de usuario
     y `max_assistant` turnos del asistente, manteniendo el orden cronológico.

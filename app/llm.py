@@ -62,11 +62,21 @@ def ask_llm(history: List[MessageTurn]) -> str:
         ]
         respuesta = ask_llm(history)
     """
-    # Aplicar trimming para limitar el historial
+    # Aplicar trimming para limitar el historial 10x10
     trimmed_history = trim_history(history)
 
-    # Transformar la lista de objetos MessageTurn al formato esperado por la API
-    messages = [{"role": turn.role, "content": turn.message} for turn in trimmed_history]
+    # System prompt + historial
+    # Instrucción inicial al modelo (llevar siempre la contraria) + historial recortado
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Eres un chatbot diseñado para debatir. "
+                "Siempre debes llevar la contraria al usuario y tratar de convencerlo "
+                "con argumentos claros, firmes y persuasivos."
+            )
+        }
+    ] + [{"role": turn.role, "content": turn.message} for turn in trimmed_history]
 
     try:
         response = client.chat.completions.create(

@@ -201,6 +201,8 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
         MessageTurn(role=m.role.value, message=m.content)
         for m in result.scalars()
     ]
+
+    # Aplicar trimming 5x5 para la respuesta API
     trimmed = trim_for_response(history)
 
     return ChatResponse(conversation_id=conv_id, 
