@@ -1,7 +1,7 @@
 # Kopi Debate API
 
 API base con **FastAPI** para el challenge de Kavak.  
-Este repo contiene la primera versión del esqueleto de la aplicación.
+Este repo contiene la útlima versión del esqueleto de la aplicación.
 
 ---
 
@@ -109,8 +109,9 @@ ENGINE=gpt-3.5-turbo
 
 ## 🗄️ Variables de entorno para Postgres
 
-Para levantar el entorno con Docker, crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+Existen dos formas de conexión: **modo local (contenedores)** y **modo remoto (Render u otro servicio en la nube)**.
 
+### Con contenedores internos
 ```env
 POSTGRES_USER=kopi_user
 POSTGRES_PASSWORD=kopi_password
@@ -118,13 +119,27 @@ POSTGRES_DB=kopi_db
 POSTGRES_PORT=5432
 ```
 
+### Con DB remota (ej. Render)
+```env
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DBNAME
+```
+
+---
+
 ## 🗄️ Persistencia y datos iniciales en la DB
 
+- En local (Docker):
 La base de datos se levanta en un contenedor de **PostgreSQL** con persistencia habilitada.  
 Los datos se almacenan en el volumen `pg_data`, lo que significa que aunque se detengan los contenedores o se reinicie el sistema, la información en la base de datos se conservará.
 
 Al ejecutarse por primera vez, Docker inicializa el esquema definido en `scripts/ddl.sql` y además carga una conversación de ejemplo mediante `scripts/seed.sql`.  
 El propósito de este *seed* es únicamente **validar que la DB está funcional y admite registros**. A partir de ahí, todas las conversaciones generadas por la API quedarán guardadas de forma persistente en el volumen.
+
+- En remoto (Render):  
+  La app usa un `lifespan` que asegura la **idempotencia** al crear tablas (`create_all`).  
+  Esto significa que, si ya existen, no se duplican ni borran.  
+  Así se garantiza que la API puede correr sin errores en despliegues cloud.  
+  ⚠️ Esto **no interfiere** con contenedores locales, porque Docker sigue aplicando los `ddl.sql` al levantar.
 
 ---
 
@@ -224,3 +239,6 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
   - Se aplica en las **llamadas al LLM** para optimizar el consumo de tokens en la API de OpenAI.  
   - En la **DB se conserva todo el historial completo**, sin recortes.  
 - **Fallback seguro**: en caso de error del LLM, la API devuelve y persiste un mensaje de fallback como `assistant`, manteniendo la coherencia de la conversación.  
+- **Idempotencia en creación de tablas (lifespan)**:  
+  - Con `Base.metadata.create_all` las tablas se crean si no existen.  
+  - Esto evita fallos en despliegues cloud y no afecta al flujo con contenedores locales (que ya tienen su propio init con SQL). 

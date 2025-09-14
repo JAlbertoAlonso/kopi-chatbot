@@ -15,7 +15,7 @@ from app.llm import ask_llm
 from app.utils.trimming import trim_for_response
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update
 from app.db import get_db, engine, Base
 from app.models import Conversation, Message, MessageRole
 from datetime import datetime, timezone
@@ -23,6 +23,29 @@ from datetime import datetime, timezone
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Context manager que define el ciclo de vida (lifespan) de la aplicación FastAPI.
+
+    Este bloque se ejecuta automáticamente cuando la app inicia y cuando se apaga,
+    permitiendo ejecutar lógica de inicialización y de limpieza.
+
+    Flujo:
+    -------
+    1. **Startup (inicio de la app)**:
+       - Muestra la URL de la base de datos a la que se conecta.
+       - Establece la conexión inicial con la DB remota.
+       - Crea/verifica todas las tablas definidas en los modelos de SQLAlchemy 
+         (usando `Base.metadata.create_all`).
+       - Es idempotente: si las tablas ya existen, no las recrea ni borra datos.
+
+    2. **Yield**:
+       - Mantiene corriendo la aplicación FastAPI mientras atiende requests.
+
+    3. **Shutdown (apagado de la app)**:
+       - Se ejecuta cualquier lógica de limpieza (en este caso, solo imprime un log).
+    """
+
+    # --- Startup ---
     # Mostrar a qué DB se está conectando
     print(f"Conectando a DB en: {engine.url}")
 
@@ -32,8 +55,10 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
         print("Tablas listas en la DB remota de Render")
 
+    # --- App corriendo ---
     yield  # Aquí la app se queda corriendo
 
+    # --- Shutdown ---
     # (Opcional) al cerrar la app se puede hacer cleanup
     print("App apagándose...")
 
