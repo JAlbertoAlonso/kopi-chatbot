@@ -1,3 +1,42 @@
+# -------------------------------------------------------------------
+# requirements.txt - Dependencias de Kopi Debate API
+#
+# Propósito:
+# ----------
+# Definir las librerías de Python necesarias para ejecutar el proyecto,
+# asegurando un entorno reproducible tanto en desarrollo como en despliegue.
+#
+# Principales grupos de dependencias:
+# -----------------------------------
+# • Framework web:
+#     - fastapi          → Framework principal para la API.
+#     - uvicorn          → Servidor ASGI para correr FastAPI.
+#
+# • Integración con LLM:
+#     - openai           → Cliente oficial para consumir modelos de OpenAI.
+#
+# • Configuración y utilidades:
+#     - python-dotenv    → Carga de variables desde archivo .env.
+#     - python-multipart → Manejo de formularios/multipart en FastAPI.
+#     - pydantic         → Validación y serialización de datos.
+#     - requests / httpx → Clientes HTTP síncrono y asíncrono.
+#
+# • Testing:
+#     - pytest           → Framework de testing.
+#     - pytest-asyncio   → Soporte para tests asíncronos con pytest.
+#
+# • Base de datos:
+#     - sqlalchemy       → ORM para modelado y consultas.
+#     - asyncpg          → Driver asíncrono para PostgreSQL.
+#     - psycopg / psycopg-binary → Driver alternativo moderno para PostgreSQL.
+#     - greenlet         → Necesario para ciertas operaciones async de SQLAlchemy.
+#
+# Versión:
+# --------
+# Todas las librerías se encuentran fijadas en versiones específicas
+# para evitar incompatibilidades en distintos entornos.
+# -------------------------------------------------------------------
+
 fastapi==0.111.1
 uvicorn==0.30.3
 openai==1.107.0

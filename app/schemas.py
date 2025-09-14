@@ -1,3 +1,18 @@
+"""
+Este módulo define los modelos de datos (schemas) usados por el endpoint /chat.
+
+Se utilizan clases de Pydantic (BaseModel) para:
+- Validar las solicitudes de entrada (ChatRequest).
+- Estructurar los mensajes individuales de la conversación (MessageTurn).
+- Dar forma a las respuestas devueltas por la API (ChatResponse).
+
+En resumen:
+- ChatRequest: lo que envía el cliente (texto y, opcionalmente, un ID de conversación).
+- MessageTurn: representa cada mensaje en la conversación, indicando si viene del usuario o del asistente.
+- ChatResponse: lo que devuelve el servidor, incluyendo el ID de conversación,
+  el historial completo de mensajes y metadatos como el motor de IA utilizado.
+"""
+
 from typing import Optional, Literal, List
 from pydantic import BaseModel
 

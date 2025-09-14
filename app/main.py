@@ -1,4 +1,36 @@
 # app/main.py
+"""
+Módulo principal de la aplicación FastAPI (app/main.py).
+
+Responsabilidades:
+------------------
+- Configuración inicial de la aplicación (FastAPI instance).
+- Definición del ciclo de vida (lifespan) para inicializar y limpiar recursos,
+  incluyendo la creación/verificación de tablas en la base de datos PostgreSQL.
+- Exposición de endpoints principales de la API:
+    • GET "/"       → Saludo simple para verificar que la API está corriendo.
+    • GET "/health" → Healthcheck para monitoreo.
+    • POST "/chat"  → Endpoint principal del chatbot con persistencia en Postgres.
+
+Flujo del endpoint /chat:
+-------------------------
+1. Si no se recibe `conversation_id`, se crea una nueva conversación en la DB.
+2. Se guarda el mensaje del usuario en la tabla `messages`.
+3. Se recupera el historial de la conversación desde la DB.
+4. Se genera la respuesta del bot con el LLM (función ask_llm).
+5. Se guarda la respuesta del bot en la DB.
+6. Se actualizan contadores en la tabla `conversations`.
+7. Se devuelve el historial recortado (últimos 5 mensajes por rol).
+
+Dependencias clave:
+-------------------
+- FastAPI: framework para definir los endpoints y gestionar dependencias.
+- SQLAlchemy Async: acceso asíncrono a PostgreSQL.
+- Pydantic: validación de datos de entrada/salida (ChatRequest, ChatResponse).
+- LLM externo: función ask_llm que genera respuestas basadas en el historial.
+- trim_for_response: utilidad para limitar el historial en la respuesta API.
+"""
+
 import asyncio
 import sys
 

@@ -1,8 +1,39 @@
+# -------------------------------------------------------------------
 # docker-compose.yml
-# -------------------------------------------------
-# Orquesta la base de datos PostgreSQL y la API FastAPI
-# en contenedores separados pero conectados entre sí.
-# -------------------------------------------------
+#
+# Propósito:
+# ----------
+# Orquestar la infraestructura mínima del proyecto "Kopi Debate API":
+# - Base de datos PostgreSQL
+# - API en FastAPI
+#
+# Funcionalidad:
+# --------------
+# • Define dos servicios:
+#     1. db  → contenedor con PostgreSQL 16, con persistencia en volumen.
+#     2. api → contenedor que levanta la aplicación FastAPI, conectado a la DB.
+#
+# • Gestiona variables de entorno desde un archivo .env:
+#     POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, OPENAI_API_KEY.
+#
+# • Expone servicios a la máquina host:
+#     - PostgreSQL en el puerto definido en .env (ej: 5432).
+#     - FastAPI en http://localhost:8000.
+#
+# • Volúmenes:
+#     - pg_data: mantiene datos persistentes de la DB.
+#     - ./scripts: inicializa la DB ejecutando automáticamente archivos .sql.
+#
+# • Healthcheck:
+#     - Garantiza que el servicio de DB esté operativo antes de que arranque la API.
+#
+# Resultado:
+# ----------
+# Con un solo comando (`docker-compose up --build`), se obtiene un entorno
+# de desarrollo listo con DB + API interconectadas, usando configuración
+# reproducible y portable.
+# -------------------------------------------------------------------
+
 
 version: "3.9"
 
