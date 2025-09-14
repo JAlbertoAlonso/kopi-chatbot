@@ -83,30 +83,30 @@ run:
 
 # Ejecutar todos los tests
 tests-all:
-	pytest -v tests/
+	docker compose exec api pytest -v tests/
 
 # Ejecutar todos los tests (alias más corto)
 test: tests-all
 
 # Ejecutar solo los tests de persistencia en DB
 tests-api-db:
-	pytest -v -k "test_chat_persists_messages"
+	docker compose exec api pytest -v -k "test_chat_persists_messages"
 
 # Ejecutar solo los tests de resiliencia al fallo del LLM
 tests-fallback:
-	pytest -v -k "test_chat_fallback_on_llm_failure"
+	docker compose exec api pytest -v -k "test_chat_fallback_on_llm_failure"
 
 # Ejecutar solo los tests de trimming (historial 5x5 en API y LLM)
 tests-trimming:
-	pytest -v tests/test_chat.py
+	docker compose exec api pytest -v tests/test_chat.py
 
 # Ejecutar solo los tests de performance
 tests-performance:
-	pytest -v tests/test_chat_performance.py
+	docker compose exec api pytest -v tests/test_chat_performance.py
 
 # Ejecutar la prueba de integración del endpoint /chat
 test-chat:
-	pytest -v tests/test_chat_debate.py
+	python scripts/test_chat_debate.py
 
 
 # ======================
