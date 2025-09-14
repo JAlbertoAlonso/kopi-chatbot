@@ -7,20 +7,21 @@ El proyecto implementa un **chatbot de debate** que mantiene coherencia en el hi
 
 ## 📑 Índice
 
-1. [Requisitos del sistema](#-requisitos-del-sistema)  
-2. [Instalación rápida (Makefile)](#-instalación-rápida-makefile)  
-3. [Instalación manual (local sin Docker)](#-instalación-manual-local-sin-docker)  
-4. [Endpoints iniciales](#-endpoints-iniciales)  
-5. [Dependencias iniciales](#-dependencias-iniciales)  
-6. [Configuración de entorno](#-configuración-de-entorno)  
-7. [Persistencia de datos](#-persistencia-de-datos)  
-8. [Levantar con Docker y Makefile](#-levantar-con-docker-y-makefile)  
-9. [Pruebas](#-pruebas)  
-10. [Decisiones de arquitectura y estrategias](#-decisiones-de-arquitectura-y-estrategias)  
-11. [Ejemplos de inicios de conversación](#-ejemplos-de-inicios-de-conversación)
+1. [Requisitos del sistema](#requisitos-sistema)  
+2. [Instalación rápida (Makefile)](#instalacion-rapida)  
+3. [Instalación manual (local sin Docker)](#instalacion-manual)  
+4. [Endpoints iniciales](#endpoints-iniciales)  
+5. [Dependencias iniciales](#dependencias-iniciales)  
+6. [Configuración de entorno](#configuracion-entorno)  
+7. [Persistencia de datos](#persistencia-datos)  
+8. [Levantar con Docker y Makefile](#levantar-docker)  
+9. [Pruebas](#pruebas)  
+10. [Decisiones de arquitectura y estrategias](#decisiones-arquitectura)  
+11. [Ejemplos de inicios de conversación](#ejemplos-conversacion)
 
 ---
 
+<a id="requisitos-sistema"></a>
 ## 🚀 Requisitos del sistema
 
 - Python 3.12
@@ -29,7 +30,8 @@ El proyecto implementa un **chatbot de debate** que mantiene coherencia en el hi
 
 ---
 
-## ⚙️ Instalación rápida (Makefile)
+<a id="instalacion-rapida"></a>
+## ⛓️ Instalación rápida (Makefile)
 
 Si quieres levantar todo con **Docker Compose** y el **Makefile**, este es el camino recomendado:
 
@@ -58,7 +60,9 @@ make run
 
 ---
 
+<a id="instalacion-manual"></a>
 ## ⚙️ Instalación manual (local sin Docker)
+
 
 Si prefieres ejecutar sin Docker, debes tener una base de datos Postgres corriendo localmente o en remoto, y configurarla en `.env`.
 
@@ -93,6 +97,7 @@ uvicorn app.main:app --reload
 
 ---
 
+<a id="endpoints-iniciales"></a>
 ## 📡 Endpoints iniciales
 
 - Home → http://127.0.0.1:8000/  
@@ -131,6 +136,7 @@ Response:
 
 ---
 
+<a id="dependencias-iniciales"></a>
 ## 📦 Dependencias iniciales
 
 - fastapi==0.111.1 – framework principal  
@@ -143,6 +149,7 @@ Response:
 
 ---
 
+<a id="configuracion-entorno"></a>
 ## 🔑 Configuración de entorno
 
 Este proyecto requiere algunas variables de entorno definidas en un archivo `.env` en la raíz del repositorio.
@@ -177,6 +184,7 @@ DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DBNAME
 
 ---
 
+<a id="persistencia-datos"></a>
 ## 💾 Persistencia de datos
 
 La API persiste todas las conversaciones en **PostgreSQL** mediante **SQLAlchemy Async**.  
@@ -196,6 +204,7 @@ La API persiste todas las conversaciones en **PostgreSQL** mediante **SQLAlchemy
 
 ---
 
+<a id="levantar-docker"></a>
 ## 🐳 Levantar con Docker y Makefile
 
 Puedes levantar la API y la base de datos directamente con **Docker Compose** usando los comandos del Makefile.
@@ -245,6 +254,7 @@ make
 
 ---
 
+<a id="pruebas"></a>
 ## 🧪 Pruebas
 
 La suite de tests está construida con **pytest** y cubre los aspectos clave del challenge:
@@ -287,27 +297,8 @@ Esto permite comprobar que:
 
 ---
 
-## 🔍 Prueba de integración manual
-
-Además de las pruebas automatizadas, el proyecto incluye un script de integración simple para validar el endpoint `/chat` directamente contra la API en ejecución:
-
-```bash
-make test-chat
-```
-
-Este flujo permite probar manualmente que:
-- La API está corriendo y accesible.
-- El endpoint `/chat` responde correctamente.
-- El historial de conversación se mantiene coherente.
-
-⚠️ **Nota importante:**  
-Después de levantar la API con `make up`, espera unos segundos antes de ejecutar `make test-chat`.  
-Esto asegura que las tablas (`conversations`, `messages`) ya hayan sido creadas en la base de datos durante el startup de FastAPI.  
-
-
----
-
-## 🏗️ Decisiones de arquitectura y estrategias 
+<a id="decisiones-arquitectura"></a>
+## 🏗️ Decisiones de arquitectura y estrategias
 
 Este proyecto incluye varias decisiones clave documentadas como ADRs (Architecture Decision Records).
 
@@ -325,6 +316,7 @@ Este proyecto incluye varias decisiones clave documentadas como ADRs (Architectu
 
 ---
 
+<a id="ejemplos-conversacion"></a>
 ## 🗣️ Ejemplos de inicios de conversación
 
 Para probar rápidamente el comportamiento del bot (postura contraria y trimming), puedes iniciar conversaciones con frases como estas:
