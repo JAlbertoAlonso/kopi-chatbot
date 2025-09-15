@@ -100,39 +100,36 @@ uvicorn app.main:app --reload
 <a id="endpoints-iniciales"></a>
 ## 📡 Endpoints iniciales
 
-- Home → http://127.0.0.1:8000/  
+- **Home** → http://127.0.0.1:8000/
   ```json
-    {"ok": true, "msg": "Hello world :) | FastAPI está corriendo 👋"}
+  {"ok": true, "msg": "Hello world :) | FastAPI está corriendo 👋"}
   ```
 
-- Health → http://127.0.0.1:8000/health  
+- **Health** → http://127.0.0.1:8000/health
   ```json
-    {"status": "healthy"}
+  {"status": "healthy"}
   ```
 
-- Docs (Swagger) → http://127.0.0.1:8000/docs
+- **Docs (Swagger UI)** → http://127.0.0.1:8000/docs  
+  👉 Aquí puedes probar el chatbot con requests reales.  
 
-- Chatbot → http://127.0.0.1:8000/chat
-
-Request:
-```json
-    {
-  "conversation_id": null,
-  "message": "Hola, ¿qué tal?"
-}
-```
-
-Response:
-```json
-    {
-  "conversation_id": "uuid",
-  "message": [
-    {"role": "user", "message": "Hola, ¿qué tal?"},
-    {"role": "assistant", "message": "¡Hola! Estoy aquí para ayudarte, ¿en qué puedo asistirte hoy?"}
-  ],
-  "engine": "gpt-3.5-turbo"
-}
-```
+- **Chatbot (`/chat`)**  
+  Este endpoint espera un **POST con JSON**, por lo que no se puede probar desde el navegador directo.  
+  Ejemplo de request con `curl`:
+  ```bash
+  curl -X POST http://127.0.0.1:8000/chat        -H "Content-Type: application/json"        -d '{"conversation_id": null, "message": "Hola, ¿qué tal?"}'
+  ```
+  Ejemplo de response:
+  ```json
+  {
+    "conversation_id": "uuid",
+    "message": [
+      {"role": "user", "message": "Hola, ¿qué tal?"},
+      {"role": "assistant", "message": "¡Hola! Estoy aquí para ayudarte, ¿en qué puedo asistirte hoy?"}
+    ],
+    "engine": "gpt-3.5-turbo"
+  }
+  ```
 
 ---
 
