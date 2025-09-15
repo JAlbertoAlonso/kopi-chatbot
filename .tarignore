@@ -1,0 +1,23 @@
+# Entorno virtual
+.venv/
+env/
+venv/
+
+# Archivos de entorno
+.env
+
+# Archivos generados
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Artefactos de compresión
+*.tar.gz
+
+# Cache de pytest
+.pytest_cache/
