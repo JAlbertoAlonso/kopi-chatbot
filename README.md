@@ -18,6 +18,7 @@ El proyecto implementa un **chatbot de debate** que mantiene coherencia en el hi
 9. [Pruebas](#pruebas)  
 10. [Decisiones de arquitectura y estrategias](#decisiones-arquitectura)  
 11. [Ejemplos de inicios de conversación](#ejemplos-conversacion)
+12. [Ajustes realizados a partir del feedback](#ajustes-feedback)
 
 ---
 
@@ -150,6 +151,19 @@ uvicorn app.main:app --reload
 ## 🔑 Configuración de entorno
 
 Este proyecto requiere algunas variables de entorno definidas en un archivo `.env` en la raíz del repositorio.
+
+### Archivo `.env.template`
+
+Para facilitar la configuración, el repositorio incluye un archivo **`.env.template`** en la raíz.  
+Este archivo contiene todas las variables requeridas con valores de ejemplo.
+
+👉 Para crear tu entorno local, simplemente copia el template:
+
+```bash
+cp .env.template .env
+```
+
+Después, edita el archivo `.env` con tus credenciales y parámetros reales (ej. `OPENAI_API_KEY`, `DATABASE_URL`).
 
 ### OpenAI
 ```env
@@ -341,3 +355,24 @@ Para probar rápidamente el comportamiento del bot (postura contraria y trimming
   "message": "Las calificaciones numéricas deberían eliminarse del sistema educativo."
 }
 ```
+
+---
+
+<a id="ajustes-feedback"></a>
+## 🔧 Ajustes realizados a partir del feedback
+
+Este repositorio incorpora mejoras solicitadas por el equipo revisor:
+
+- **`.env.template` claro** con todas las variables necesarias (`OPENAI_API_KEY`, `OPENAI_MODEL`, `DATABASE_URL` local/Render, `POSTGRES_*`, etc.).  
+  - Uso: `cp .env.template .env` y completa los valores.
+- **Validación de `conversation_id`**: si no se envía (y no es inicio de conversación), el endpoint `/chat` responde **`404 Not Found`** con:
+  ```json
+  {"detail": "conversation_id no encontrado o inválido"}
+  ```
+- **Definición de `stance` (postura) y coherencia**:
+  - En conversación nueva, se detecta tema con la primera entrada y se define una postura con ayuda del LLM.
+  - `topic` y `stance` se **persisten en DB**, y en cada turno se refuerza la instrucción: “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”
+  - Esto evita cambios de discusión y mantiene consistencia en ≥5 turnos.
+
+> Para la lista detallada de tareas y criterios de aceptación, revisa **[BACKLOG.md](./BACKLOG.md)**.
+

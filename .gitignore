@@ -11,6 +11,7 @@ venv/
 # Entorno / claves
 .env
 .env.*
+!.env.template
 
 # Distribución / build
 dist/
