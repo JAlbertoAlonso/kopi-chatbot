@@ -136,6 +136,10 @@ tests-performance:
 test-chat:
 	python scripts/test_chat_debate.py
 
+# Ejecutar solo los tests de validación de conversation_id
+tests-conversation-id:
+	docker compose exec api pytest -v tests/test_chat_conversation_id.py
+
 
 # ======================
 # Base de datos
