@@ -274,7 +274,10 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
 - **Fallback en caso de error del LLM** → resiliencia del sistema.  
 - **Trimming (5x5)** → recorte del historial expuesto por la API.  
 - **Performance** → tiempo de respuesta < 5s y metadatos correctos.  
-- **Integración del endpoint `/chat`** → flujo completo con un mensaje real.  
+- **Validación de `conversation_id`** → asegura que:
+  - Si `conversation_id` es `null` → inicia nueva conversación.
+  - Si `conversation_id` es inválido (no UUID) → devuelve `404`.
+  - Si `conversation_id` es UUID válido pero no existe en DB → devuelve `404`. 
 
 ### Comandos principales
 
@@ -289,6 +292,7 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
   make tests-fallback     # fallback del LLM
   make tests-trimming     # trimming 5x5
   make tests-performance  # performance
+  make tests-conversation-id # validación de conversation_id
   ```
 
 ### Prueba manual rápida
@@ -305,6 +309,50 @@ Esto permite comprobar que:
 - El historial de conversación se mantiene coherente.  
 
 ⚠️ Nota: después de levantar la API con `make up`, espera unos segundos antes de ejecutar `make test-chat` para que las tablas se creen en la DB.
+
+---
+
+### Prueba manual de `conversation_id`
+
+Además de la prueba rápida con `make test-chat`, puedes validar el manejo de `conversation_id` directamente desde Swagger o con `curl`.  
+
+Ejemplos de requests:
+
+- **Inicio de conversación (conversation_id = null)**  
+```json
+{
+  "conversation_id": null,
+  "message": "Hola, soy un test manual."
+}
+```
+
+- **Conversación con id inválido**  
+```json
+{
+  "conversation_id": "soy-un-id-invalido",
+  "message": "Mensaje con id inválido"
+}
+```
+
+Respuesta esperada:  
+```json
+{"detail": "conversation_id no encontrado o inválido"}
+```
+
+- **Conversación con id válido pero inexistente en DB**  
+```json
+{
+  "conversation_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "message": "Mensaje con id válido pero no existe"
+}
+```
+
+Respuesta esperada:  
+```json
+{"detail": "conversation_id no encontrado o inválido"}
+```
+
+👉 Esto garantiza que el API valida correctamente los casos borde relacionados con el identificador de la conversación.
 
 ---
 
