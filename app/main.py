@@ -38,7 +38,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from uuid import uuid4, UUID
 from typing import Dict, List
 
@@ -48,6 +48,7 @@ from app.utils.trimming import trim_for_response
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.exc import NoResultFound
 from app.db import get_db, engine, Base
 from app.models import Conversation, Message, MessageRole
 from datetime import datetime, timezone
@@ -99,7 +100,7 @@ async def lifespan(app: FastAPI):
 # El título y la versión aparecerán en la documentación automática (Swagger)
 app = FastAPI(
     title="Kopi Debate API",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan
 )
 
@@ -165,16 +166,29 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
         await db.commit()
         await db.refresh(conv)
         conv_id = str(conv.id)
+        conv_uuid = conv.id
+    
+    # Validar que el string sea un UUID válido
     else:
-        conv_id = request.conversation_id
+        try:
+            conv_uuid = UUID(request.conversation_id)
+        except Exception:
+            # conversation_id con formato inválido
+            raise HTTPException(status_code=404, detail="conversation_id no encontrado o inválido")
+
         result = await db.execute(
-            select(Conversation).where(Conversation.id == UUID(conv_id))
+            select(Conversation).where(Conversation.id == conv_uuid)
         )
-        conv = result.scalar_one()
+        conv = result.scalar_one_or_none()
+        if not conv:
+            # conversation_id válido en forma, pero no existe en DB
+            raise HTTPException(status_code=404, detail="conversation_id no encontrado o inválido")
+
+        conv_id = str(conv.id)
 
     # 2. Guardar mensaje del usuario
     user_msg = Message(
-        conversation_id=UUID(conv_id),
+        conversation_id=conv_uuid,
         role=MessageRole.user,
         content=request.message,
         created_at=datetime.now(timezone.utc)
@@ -186,7 +200,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
     # 3. Recuperar historial de la conversación
     result = await db.execute(
         select(Message)
-        .where(Message.conversation_id == UUID(conv_id))
+        .where(Message.conversation_id == conv_uuid)
         .order_by(Message.created_at)
     )
     history = [
@@ -203,7 +217,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
 
     # 5. Guardar respuesta del bot
     bot_msg = Message(
-        conversation_id=UUID(conv_id),
+        conversation_id=conv_uuid,
         role=MessageRole.assistant,
         content=bot_reply,
          created_at=datetime.now(timezone.utc)
@@ -213,7 +227,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
     # 6. Actualizar contadores en la conversación
     await db.execute(
         update(Conversation)
-        .where(Conversation.id == UUID(conv_id))
+        .where(Conversation.id == conv_uuid)
         .values(
             message_count_user=Conversation.message_count_user + 1,
             message_count_bot=Conversation.message_count_bot + 1,
@@ -226,7 +240,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
     # 7. Recuperar historial final y aplicar trimming 5x5
     result = await db.execute(
         select(Message)
-        .where(Message.conversation_id == conv_id)
+        .where(Message.conversation_id == conv_uuid)
         .order_by(Message.created_at)
     )
     history = [

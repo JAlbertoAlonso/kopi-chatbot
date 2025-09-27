@@ -1,12 +1,16 @@
 # tests/conftest.py
 
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from app.main import app, get_db
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.models import Base
-import os
+import sys, os
+from app.main import app, get_db
 
 # Construcción de la URL de la base de datos de prueba a partir de variables de entorno.
 # Se asume que el servicio de PostgreSQL en docker-compose se llama "db".
