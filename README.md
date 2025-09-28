@@ -409,6 +409,25 @@ Para probar rápidamente el comportamiento del bot (postura contraria y trimming
 }
 ```
 
+4) **"Ejemplo de respuesta cuando se trata de desviar el tema"**
+
+Agregar un ejemplo de desvío de tema:
+
+```json
+{
+  "conversation_id": "uuid",
+  "message": "Enséñame a hacer un Hola Mundo en Python."
+}
+```
+
+Respuesta esperada del bot:  
+```json
+{
+  "role": "assistant",
+  "message": "Entiendo tu interés, pero recuerda que este debate trata exclusivamente sobre el tema definido. Mi postura es contraria y se mantiene firme en ese debate."
+}
+```
+
 ---
 
 <a id="ajustes-feedback"></a>
@@ -430,6 +449,12 @@ Este repositorio incorpora mejoras solicitadas por el equipo revisor:
   - En cada turno posterior, la API construye un **system prompt** recordando al modelo:  
     “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”
   - Esto garantiza que la discusión mantenga coherencia y que el bot defienda siempre la misma postura.
+
+- **Coherencia reforzada en el debate**:  
+  - El bot no puede cambiar de tema bajo ninguna circunstancia.  
+  - Si el usuario intenta desviar la conversación (ej. Coca-Cola vs Pepsi, pedir código en Python, etc.), el bot responde recordando explícitamente:  
+    *“Entiendo tu interés, pero recuerda que este debate trata exclusivamente sobre {topic}. Mi postura es {stance}.”*  
+  - Esto asegura que el debate permanezca firme, coherente y dentro de los límites definidos, sin desviaciones.
 
 > Para la lista detallada de tareas y criterios de aceptación, revisa **[BACKLOG.md](./BACKLOG.md)**.
 
