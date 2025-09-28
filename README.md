@@ -451,23 +451,25 @@ Este repositorio incorpora mejoras solicitadas por el equipo revisor:
 - **`.env.template` claro** con todas las variables necesarias (`OPENAI_API_KEY`, `OPENAI_MODEL`, `DATABASE_URL` local/Render, `POSTGRES_*`, etc.).  
   - Uso: `cp .env.template .env` y completa los valores.
 
-- **Validación de `conversation_id`**: si no se envía (y no es inicio de conversación), el endpoint `/chat` responde **`404 Not Found`** con:
-  ```json
-  {"detail": "conversation_id no encontrado o inválido"}
-  ```
+- **Validación estricta de `conversation_id`**  
+  - Si no se envía (y no es inicio de conversación), el endpoint `/chat` responde **`404 Not Found`** con:  
+    ```json
+    {"detail": "conversation_id no encontrado o inválido"}
+    ```  
+  - Referencia: [ADR-0012: Manejo estricto de errores 400/404 en `/chat`](docs/adr/0012-chat-errors.md)
 
-- **Detección y persistencia de `topic` y `stance`:**
-  - Al iniciar conversación (cuando `conversation_id=null`), se detecta automáticamente el **tema** del mensaje y se asigna una **postura contraria** al usuario.
-  - Tanto `topic` como `stance` se **persisten en la base de datos**.
+- **Detección y persistencia de `topic` y `stance`:**  
+  - Al iniciar conversación (cuando `conversation_id=null`), se detecta automáticamente el **tema** del mensaje y se asigna una **postura contraria** al usuario.  
+  - Tanto `topic` como `stance` se **persisten en la base de datos**.  
   - En cada turno posterior, la API construye un **system prompt** recordando al modelo:  
-    “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”
-  - Esto garantiza que la discusión mantenga coherencia y que el bot defienda siempre la misma postura.
+    “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”  
+  - Esto garantiza que la discusión mantenga coherencia y que el bot defienda siempre la misma postura.  
 
-- **Coherencia reforzada en el debate**:  
+- **Coherencia reforzada en el debate**  
   - El bot no puede cambiar de tema bajo ninguna circunstancia.  
   - Si el usuario intenta desviar la conversación (ej. Coca-Cola vs Pepsi, pedir código en Python, etc.), el bot responde recordando explícitamente:  
     *“Entiendo tu interés, pero recuerda que este debate trata exclusivamente sobre {topic}. Mi postura es {stance}.”*  
-  - Esto asegura que el debate permanezca firme, coherente y dentro de los límites definidos, sin desviaciones.
+  - Esto asegura que el debate permanezca firme, coherente y dentro de los límites definidos, sin desviaciones.  
+  - Referencia: [ADR-0013: Coherencia en el debate y manejo de desvíos](docs/adr/0013-stance-coherence.md)
 
 > Para la lista detallada de tareas y criterios de aceptación, revisa **[BACKLOG.md](./BACKLOG.md)**.
-
