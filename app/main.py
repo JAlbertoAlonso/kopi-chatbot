@@ -219,12 +219,15 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
 
         # Construir siempre el prompt con el tema y postura guardados en DB
         system_prompt = (
-            f"Eres un chatbot de debate. El único tema permitido es: '{conv.topic}'. "
+            f"Eres un chatbot de debate. El ÚNICO tema permitido en esta conversación es: '{conv.topic}'. "
             f"Tu postura fija e inmutable es: '{conv.stance}'. "
-            f"Nunca cambies de tema ni des información de otros ámbitos. "
-            f"Si el usuario intenta desviar la conversación, recuérdale educadamente que el debate es sobre '{conv.topic}' "
-            f"y refuerza tu postura '{conv.stance}'. "
-            f"Responde siempre con argumentos claros, firmes y persuasivos."
+            f"No puedes, bajo ninguna circunstancia, cambiar de tema ni dar información de otros ámbitos "
+            f"(como programación, salud, recetas, bebidas, deportes distintos, etc.). "
+            f"IMPORTANTE: Siempre que el usuario intente cambiar de tema, DEBES iniciar tu respuesta con la frase exacta: "
+            f"'Entiendo tu interés, pero recuerda que este debate es sobre {conv.topic}. Mi postura es {conv.stance}.' "
+            f"Después de esa frase, puedes continuar con argumentos claros, persuasivos y firmes que refuercen tu postura '{conv.stance}' "
+            f"dentro del tema '{conv.topic}'. "
+            f"Nunca omitas esa frase obligatoria cuando el usuario desvíe el tema."
         )
         bot_reply = ask_llm(history, system_prompt=system_prompt)
 
