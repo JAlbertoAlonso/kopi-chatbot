@@ -39,24 +39,27 @@
 # Ayuda: lista todos los comandos disponibles
 help:
 	@echo "Comandos disponibles en Kopi Debate API:"
-	@echo "  make run             Levanta la API y DB en contenedores (build incluido)."
-	@echo "  make up              Levanta los contenedores en segundo plano."
-	@echo "  make down            Detiene y elimina los contenedores."
-	@echo "  make build           Reconstruye las imágenes desde cero."
-	@echo "  make logs-api        Muestra logs de la API."
-	@echo "  make logs-db         Muestra logs de la base de datos."
-	@echo "  make install         Instala dependencias en entorno local (sin Docker)."
-	@echo "  make test            Ejecuta toda la suite de pruebas."
-	@echo "  make tests-api-db    Ejecuta solo tests de persistencia en DB."
-	@echo "  make tests-fallback  Ejecuta solo tests de fallback del LLM."
-	@echo "  make tests-trimming  Ejecuta solo tests de trimming 5x5."
+	@echo "  make run               Levanta la API y DB en contenedores (build incluido)."
+	@echo "  make up                Levanta los contenedores en segundo plano."
+	@echo "  make down              Detiene y elimina los contenedores."
+	@echo "  make build             Reconstruye las imágenes desde cero."
+	@echo "  make logs-api          Muestra logs de la API."
+	@echo "  make logs-db           Muestra logs de la base de datos."
+	@echo "  make install           Instala dependencias en entorno local (sin Docker)."
+	@echo "  make test              Ejecuta toda la suite de pruebas."
+	@echo "  make tests-api-db      Ejecuta solo tests de persistencia en DB."
+	@echo "  make tests-fallback    Ejecuta solo tests de fallback del LLM."
+	@echo "  make tests-trimming    Ejecuta solo tests de trimming 5x5."
 	@echo "  make tests-performance Ejecuta solo tests de performance."
-	@echo "  make test-chat       Ejecuta prueba manual de /chat fuera de los test de validacion."
-	@echo "  make psql            Abre consola psql contra la DB del contenedor."
-	@echo "  make db-tables       Lista las tablas en la DB."
-	@echo "  make seed FILE=...   Ejecuta un script SQL dentro de la DB."
-	@echo "  make ps              Muestra servicios corriendo."
-	@echo "  make clean           Limpia contenedores, volúmenes y redes."
+	@echo "  make tests-conversation-id Ejecuta solo tests de validación de conversation_id."
+	@echo "  make tests-topic-stance   Ejecuta solo tests de detección y consistencia de topic/stance."
+	@echo "  make test-chat         Ejecuta prueba manual de /chat fuera de los tests de validación."
+	@echo "  make psql              Abre consola psql contra la DB del contenedor."
+	@echo "  make db-tables         Lista las tablas en la DB."
+	@echo "  make seed FILE=...     Ejecuta un script SQL dentro de la DB."
+	@echo "  make ps                Muestra servicios corriendo."
+	@echo "  make clean             Limpia contenedores, volúmenes y redes."
+
 
 include .env
 export
@@ -139,6 +142,10 @@ test-chat:
 # Ejecutar solo los tests de validación de conversation_id
 tests-conversation-id:
 	docker compose exec api pytest -v tests/test_chat_conversation_id.py
+
+# Ejecutar solo los tests de detección y consistencia de topic/stance
+tests-topic-stance:
+	docker compose exec api pytest -v tests/test_chat_topic_stance.py
 
 
 # ======================
