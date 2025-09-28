@@ -41,3 +41,5 @@ async def test_topic_and_stance_detection_and_consistency(client, db_session):
     # El bot debería responder manteniendo coherencia en la postura contraria
     bot_msgs = [m["message"].lower() for m in data_second["message"] if m["role"] == "assistant"]
     assert any("piña" in msg for msg in bot_msgs), "El bot debería mantener la discusión sobre el mismo tema"
+    assert any("no" in msg or "contrario" in msg for msg in bot_msgs), \
+        "El bot debe sostener una postura contraria al usuario"

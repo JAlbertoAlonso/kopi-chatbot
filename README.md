@@ -361,6 +361,19 @@ Respuesta esperada:
 
 ---
 
+### Pruebas específicas adicionales
+
+Además de las pruebas ya existentes, ahora se incluye una prueba dedicada a la **consistencia del stance**:
+
+```bash
+make tests-stance-consistency
+```
+
+- **tests-stance-consistency** → valida que, aunque el usuario intente desviar el tema (ej. hablar de refrescos o programación), 
+el bot se mantiene firme en el **topic** inicial detectado y defiende siempre la misma **postura (stance)**.
+
+---
+
 <a id="decisiones-arquitectura"></a>
 ## 🏗️ Decisiones de arquitectura y estrategias
 
