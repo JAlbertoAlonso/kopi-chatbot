@@ -168,8 +168,9 @@ Después, edita el archivo `.env` con tus credenciales y parámetros reales (ej.
 ### OpenAI
 ```env
 OPENAI_API_KEY=tu_api_key_aquí
+OPENAI_MODEL=gpt-3.5-turbo   # modelo por defecto, configurable
 ```
-⚠️ La API utiliza GPT de OpenAI como motor.  
+⚠️ La API utiliza GPT de OpenAI como motor. Puedes ajustar el modelo en esta variable (`gpt-3.5-turbo`, `gpt-4-turbo`, etc.).
 Por seguridad no se incluye ninguna API Key en el repo; cada usuario debe configurar la suya con crédito disponible.
 
 ### Postgres
@@ -278,6 +279,9 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
   - Si `conversation_id` es `null` → inicia nueva conversación.
   - Si `conversation_id` es inválido (no UUID) → devuelve `404`.
   - Si `conversation_id` es UUID válido pero no existe en DB → devuelve `404`. 
+- **Detección y consistencia de `topic/stance`** → asegura que:
+  - Se detecta automáticamente el tema y postura contraria al iniciar conversación.
+  - El bot mantiene la misma postura en turnos posteriores.
 
 ### Comandos principales
 
@@ -293,6 +297,7 @@ La suite de tests está construida con **pytest** y cubre los aspectos clave del
   make tests-trimming     # trimming 5x5
   make tests-performance  # performance
   make tests-conversation-id # validación de conversation_id
+  make tests-topic-stance    # detección y consistencia de topic/stance
   ```
 
 ### Prueba manual rápida
@@ -384,7 +389,7 @@ Para probar rápidamente el comportamiento del bot (postura contraria y trimming
 ```json
 {
   "conversation_id": null,
-  "message": "ME gusta más lo dulce que lo salado."
+  "message": "Me gusta más lo dulce que lo salado."
 }
 ```
 
@@ -413,14 +418,18 @@ Este repositorio incorpora mejoras solicitadas por el equipo revisor:
 
 - **`.env.template` claro** con todas las variables necesarias (`OPENAI_API_KEY`, `OPENAI_MODEL`, `DATABASE_URL` local/Render, `POSTGRES_*`, etc.).  
   - Uso: `cp .env.template .env` y completa los valores.
+
 - **Validación de `conversation_id`**: si no se envía (y no es inicio de conversación), el endpoint `/chat` responde **`404 Not Found`** con:
   ```json
   {"detail": "conversation_id no encontrado o inválido"}
   ```
-- **Definición de `stance` (postura) y coherencia**:
-  - En conversación nueva, se detecta tema con la primera entrada y se define una postura con ayuda del LLM.
-  - `topic` y `stance` se **persisten en DB**, y en cada turno se refuerza la instrucción: “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”
-  - Esto evita cambios de discusión y mantiene consistencia en ≥5 turnos.
+
+- **Detección y persistencia de `topic` y `stance`:**
+  - Al iniciar conversación (cuando `conversation_id=null`), se detecta automáticamente el **tema** del mensaje y se asigna una **postura contraria** al usuario.
+  - Tanto `topic` como `stance` se **persisten en la base de datos**.
+  - En cada turno posterior, la API construye un **system prompt** recordando al modelo:  
+    “Recuerda que tu postura es X sobre el tema Y. No cambies de posición.”
+  - Esto garantiza que la discusión mantenga coherencia y que el bot defienda siempre la misma postura.
 
 > Para la lista detallada de tareas y criterios de aceptación, revisa **[BACKLOG.md](./BACKLOG.md)**.
 

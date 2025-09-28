@@ -43,14 +43,17 @@ from uuid import uuid4, UUID
 from typing import Dict, List
 
 from app.schemas import ChatRequest, ChatResponse, MessageTurn
-from app.llm import ask_llm
+from app.llm import ask_llm, detect_topic_and_stance
 from app.utils.trimming import trim_for_response
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.exc import NoResultFound
+
+from app.config import OPENAI_MODEL
 from app.db import get_db, engine, Base
 from app.models import Conversation, Message, MessageRole
+
 from datetime import datetime, timezone
 
 
@@ -155,12 +158,15 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
 
     # 1. Crear conversación si no existe
     if request.conversation_id is None:
+
+        # Detectar tema y postura contraria a partir del primer mensaje
+        topic, stance = detect_topic_and_stance(request.message)
+
         conv = Conversation(
             id=uuid4(),
-            topic="general",
-            stance="neutral",
-            # engine="gpt-4-turbo",  # Modelo para entrega final
-            engine="gpt-3.5-turbo", # Modelo para desarrollo
+            topic=topic,
+            stance=stance,
+            engine=OPENAI_MODEL
         )
         db.add(conv)
         await db.commit()
@@ -210,7 +216,16 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
 
     # 4. Generar respuesta del bot con el historial
     try:
-        bot_reply = ask_llm(history)
+
+        # Construir siempre el prompt con el tema y postura guardados en DB
+        system_prompt = (
+            f"Eres un chatbot diseñado para debatir sobre el tema '{conv.topic}'. "
+            f"Tu postura definida es: '{conv.stance}'. "
+            f"Siempre mantente firme en esa postura y trata de convencer al usuario "
+            f"con argumentos claros, firmes y persuasivos."
+        )
+        bot_reply = ask_llm(history, system_prompt=system_prompt)
+
     except Exception as e:
         # Fallback: no rompemos la API, devolvemos mensaje seguro
         bot_reply = "Lo siento, ocurrió un error al procesar tu mensaje."

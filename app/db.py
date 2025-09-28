@@ -5,15 +5,14 @@
 # --------------------------------------------
 
 import os
+
+from app.config import DATABASE_URL
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Base declarativa para que los modelos la usen si no la importan aparte
 Base = declarative_base()
-
-# URL de conexión: se obtiene de la variable de entorno DATABASE_URL
-DATABASE_URL = os.getenv("DATABASE_URL")
-print(f"Conectando a DB en: {DATABASE_URL}")
 
 # Crea el engine asíncrono
 engine = create_async_engine(
