@@ -60,6 +60,7 @@ help:
 	@echo "  make seed FILE=...       Ejecuta un script SQL dentro de la DB."
 	@echo "  make ps                  Muestra servicios corriendo."
 	@echo "  make clean               Limpia contenedores, volúmenes y redes."
+	@echo "  make package             Genera un tarball versionado (según el último tag Git)."
 
 
 
@@ -186,3 +187,15 @@ ps:
 clean:
 	$(COMPOSE) down -v --remove-orphans
 	docker system prune -f
+
+
+# ======================
+# Empaquetado
+# ======================
+
+# Detectar la última versión con tag en Git
+VERSION := $(shell git describe --tags --abbrev=0)
+
+# Generar tarball con historial de commits e ignorando archivos definidos en .tarignore
+package:
+	tar --exclude-from=.tarignore -czvf kopi-chatbot-$(VERSION).tar.gz .
