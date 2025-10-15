@@ -1,6 +1,6 @@
 # ☕🤖 Kopi Debate API – por Alberto Alonso
 
-API conversacional construida con **FastAPI** para el challenge de Kavak.  
+API conversacional construida con **FastAPI**.  
 El proyecto implementa un **chatbot de debate** que mantiene coherencia en el historial gracias a estrategias de trimming y persistencia en base de datos. 
 
 ---
